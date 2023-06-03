@@ -1,6 +1,7 @@
 // TODO:
 // [ ] rotations
-// [ ] tests
+// [ ] better visualization for solutions
+// [/] tests
 // [ ] input file as command line parameter
 // [ ] raylib graphics
 
@@ -9,12 +10,11 @@
 #include "utils.c"
 #include "solver.c"
 
-
 int main()
 {
     init_stdout();
 
-    char* input_file_text = read_input_file();
+    char* input_file_text = read_input_file("test files\\puzzle2.txt");
 
     Input* parsed_input = parse_input(input_file_text);
 
@@ -37,7 +37,25 @@ int main()
     }
     print("\n");
 
-    print_solutions(parsed_input);
+    Solutions solutions = find_solutions(parsed_input);
+    print("Found ");
+    if (solutions.exceeded) { print("more than "); }
+    print_number(solutions.count);
+    print(" solution(s)\n\n");
+    for (int j = 0; j < solutions.count; j++)
+    {
+        print("Solution "); print_number(j + 1); print(":\n");
+        ShapePositions positions = solutions.data[j];
+        for (int i = 0; i < positions.count; i++)
+        {
+            ShapePositionItem position = positions.items[i];
+            print_char(position.shape_name);
+            print(": ");
+            print_number(position.x); print(", "); print_number(position.y);
+            print("\n");
+        }
+        print("\n");
+    }
 
     return 0;
 }

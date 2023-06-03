@@ -2,6 +2,7 @@
 #define MAX_FIELD_SIZE 10 // meaning 10 by 10
 #define MAX_SHAPE_COUNT 10
 #define MAX_X_COUNT 10
+#define MAX_SOLUTIONS 10
 
 typedef struct { int x, y; } Position;
 
@@ -67,7 +68,7 @@ void add_point_to_shape(int x, int y, PointInSpace point, Shape* shape)
 typedef struct
 {
     int field_size;
-    int field_xs_count; // TODO: This and shapes_count is supposed to be the same. Maybe add a check in the parsing code for this?
+    int field_xs_count;
     Position field_xs[MAX_X_COUNT];
     int shapes_count;
     Shape shapes[MAX_SHAPE_COUNT];
@@ -314,23 +315,31 @@ Input* parse_input(char* source)
         }
     }
 
+    if (result->shapes_count != result->field_xs_count)
+    {
+        print("Expected an equal amount of shapes an Xs on the field, instaed got ");
+        print_number(result->field_xs_count); print(" Xs and ");
+        print_number(result->shapes_count); print(" shapes\n");
+        ExitProcess(1);
+    }
+
     return result;
 }
 
-char* read_input_file()
+char* read_input_file(char* filename)
 {
     HANDLE input_file = CreateFile(
-            "input.txt",
-            GENERIC_READ,
-            FILE_SHARE_READ,
-            NULL,
-            OPEN_EXISTING,
-            FILE_ATTRIBUTE_NORMAL,
-            NULL
+        filename,
+        GENERIC_READ,
+        FILE_SHARE_READ,
+        NULL,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
     );
     if (input_file == INVALID_HANDLE_VALUE)
     {
-        print("Failed to open input.txt\n");
+        print("Failed to open "); print(filename); print("\n");
         ExitProcess(1);
     }
 
@@ -340,7 +349,7 @@ char* read_input_file()
     CloseHandle(input_file);
     if (bytes_read == MAX_INPUT_SIZE + 1)
     {
-        print("input.txt can not be larger than ");
+        print("Input file can not be larger than ");
         print_number(MAX_INPUT_SIZE);
         print(" bytes\n");
         ExitProcess(1);
@@ -381,10 +390,7 @@ bool do_positions_include_shape(char name, ShapePositions positions)
 {
     for (int i = 0; i < positions.count; i++)
     {
-        if (positions.items[i].shape_name == name)
-        {
-            return true;
-        }
+        if (positions.items[i].shape_name == name) { return true; }
     }
     return false;
 }
@@ -427,20 +433,30 @@ bool is_win(ShapePositions positions, Input input)
     return positions.count == input.shapes_count;
 }
 
-void print_solutions_loop(ShapePositions* positions, Input* input)
+typedef struct
 {
-    if (is_contradictory(*positions, *input)) { return; }
+    int count;
+    bool exceeded;
+    ShapePositions data[MAX_SOLUTIONS];
+} Solutions;
+
+void add_solution(ShapePositions positions, Solutions* solutions)
+{
+    if (solutions->count == MAX_SOLUTIONS)
+    {
+        solutions->exceeded = true;
+        return;
+    }
+    solutions->data[solutions->count] = positions;
+    solutions->count++;
+}
+
+void find_solutions_loop(ShapePositions* positions, Input* input, Solutions* solutions)
+{
+    if (is_contradictory(*positions, *input) || solutions->exceeded) { return; }
     if (is_win(*positions, *input))
     {
-        for (int i = 0; i < positions->count; i++)
-        {
-            ShapePositionItem position = positions->items[i];
-            print_char(position.shape_name);
-            print(": ");
-            print_number(position.x); print(", "); print_number(position.y);
-            print("\n");
-        }
-        print("\n");
+        add_solution(*positions, solutions);
         return;
     }
 
@@ -453,17 +469,20 @@ void print_solutions_loop(ShapePositions* positions, Input* input)
             Position field_x_position = input->field_xs[j];
             Position shape_x_position = get_shape_x_position(shape);
             add_shape_position(shape.name, field_x_position.x - shape_x_position.x, field_x_position.y - shape_x_position.y, positions);
-            print_solutions_loop(positions, input);
+            find_solutions_loop(positions, input, solutions);
             positions->count--;
         }
         break; // each recursive call checks just one shape
     }
 }
 
-void print_solutions(Input* input)
+Solutions find_solutions(Input* input)
 {
-    print("Solutions:\n");
+    Solutions solutions;
+    solutions.count = 0;
+    solutions.exceeded = false;
     ShapePositions positions;
     positions.count = 0;
-    print_solutions_loop(&positions, input);
+    find_solutions_loop(&positions, input, &solutions);
+    return solutions;
 }
