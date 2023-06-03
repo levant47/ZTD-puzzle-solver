@@ -27,6 +27,7 @@ int main()
 
     test("test files\\puzzle1.txt", 3, 2, 1, false);
     test("test files\\puzzle2.txt", 10, 10, 10, true);
+    test("test files\\puzzle3.txt", 10, 10, 10, true);
 
     print("Done\n");
 
