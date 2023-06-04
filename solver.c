@@ -581,3 +581,48 @@ Solutions find_solutions(Input* input)
     find_solutions_loop(&positions, input, &solutions);
     return solutions;
 }
+
+void visualize_solution(ShapePositions positions, Input* input)
+{
+    char* field = allocate(input->field_size * input->field_size);
+    // initialize to an empty field
+    for (int x = 0; x < input->field_size; x++)
+    {
+        for (int y = 0; y < input->field_size; y++)
+        {
+            field[y * input->field_size + x] = '.';
+        }
+    }
+
+    // copy shapes
+    for (int i = 0; i < positions.count; i++)
+    {
+        ShapePositionItem position = positions.items[i];
+        Shape shape = get_shape_by_name(position.shape_name, *input);
+        for (int x = 0; x < shape.width; x++)
+        {
+            for (int y = 0; y < shape.height; y++)
+            {
+                PointInSpace point = get_shape_point(x, y, shape);
+                if (point == PointInSpaceEmpty) { continue; }
+                Position local_position;
+                local_position.x = x;
+                local_position.y = y;
+                Position field_position = rotate_position(degrees_to_rotation(modulo(-rotation_to_degrees(position.rotation), 360)), local_position);
+                field_position.x += position.x;
+                field_position.y += position.y;
+                field[field_position.y * input->field_size + field_position.x] = point == PointInSpaceX ? 'X' : shape.name;
+            }
+        }
+    }
+
+    // output
+    for (int y = 0; y < input->field_size; y++)
+    {
+        for (int x = 0; x < input->field_size; x++)
+        {
+            print_char(field[y * input->field_size + x]);
+        }
+        print("\n");
+    }
+}

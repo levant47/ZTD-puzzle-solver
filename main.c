@@ -1,7 +1,9 @@
 // TODO:
 // [/] rotations
-// [ ] better visualization for solutions
+// [/] better visualization for solutions
 // [ ] check for shapes overlapping more than one X
+// [ ] support non-square fields
+// [ ] comments in input files
 // [/] tests
 // [ ] input file as command line parameter
 // [ ] raylib graphics
@@ -15,7 +17,7 @@ int main()
 {
     init_stdout();
 
-    char* input_file_text = read_input_file("test files\\puzzle4.txt");
+    char* input_file_text = read_input_file("test files\\biolab.txt");
 
     Input* parsed_input = parse_input(input_file_text);
 
@@ -46,15 +48,7 @@ int main()
     for (int j = 0; j < solutions.count; j++)
     {
         print("Solution "); print_number(j + 1); print(":\n");
-        ShapePositions positions = solutions.data[j];
-        for (int i = 0; i < positions.count; i++)
-        {
-            ShapePositionItem position = positions.items[i];
-            print_char(position.shape_name);
-            print(": ");
-            print_number(position.x); print(", "); print_number(position.y);
-            print(" at "); print_number(rotation_to_degrees(position.rotation)); print(" degrees\n");
-        }
+        visualize_solution(solutions.data[j], parsed_input);
         print("\n");
     }
 

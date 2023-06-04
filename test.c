@@ -30,6 +30,7 @@ int main()
     test("test files\\puzzle2.txt", 10, 10, 10, true);
     test("test files\\puzzle3.txt", 10, 10, 10, true);
     test("test files\\puzzle4.txt", 3, 2, 4, false);
+    test("test files\\biolab.txt", 10, 8, 1, false);
 
     print("Done\n");
 
