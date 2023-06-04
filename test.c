@@ -3,6 +3,7 @@
 #include "utils.c"
 #include "solver.c"
 
+// TODO: check solution coordinates
 void test(char *filename, int field_size, int xs_count, int solutions_count, bool exceeded)
 {
     char* input_file_text = read_input_file(filename);
@@ -28,6 +29,7 @@ int main()
     test("test files\\puzzle1.txt", 3, 2, 1, false);
     test("test files\\puzzle2.txt", 10, 10, 10, true);
     test("test files\\puzzle3.txt", 10, 10, 10, true);
+    test("test files\\puzzle4.txt", 3, 2, 4, false);
 
     print("Done\n");
 

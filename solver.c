@@ -8,6 +8,81 @@ typedef struct { int x, y; } Position;
 
 typedef enum
 {
+    ShapeRotation0 = 0,
+    ShapeRotation90,
+    ShapeRotation180,
+    ShapeRotation270,
+} ShapeRotation;
+
+ShapeRotation ALL_ROTATIONS[] = { ShapeRotation0, ShapeRotation90, ShapeRotation180, ShapeRotation270 };
+
+int rotation_to_degrees(ShapeRotation rotation)
+{
+    switch (rotation)
+    {
+        case ShapeRotation0: return 0;
+        case ShapeRotation90: return 90;
+        case ShapeRotation180: return 180;
+        case ShapeRotation270: return 270;
+        default:
+            print("Received an unexpected rotation value of ");
+            print_number((int)rotation);
+            print("\n");
+            ExitProcess(1);
+    }
+}
+
+ShapeRotation degrees_to_rotation(int degrees)
+{
+    switch (degrees)
+    {
+        case 0: return ShapeRotation0;
+        case 90: return ShapeRotation90;
+        case 180: return ShapeRotation180;
+        case 270: return ShapeRotation270;
+        default:
+            print("Received an unexpected degrees value of ");
+            print_number(degrees);
+            print("\n");
+            ExitProcess(1);
+    }
+}
+
+Position rotate_position(ShapeRotation rotation, Position position)
+{
+    Position result;
+    if (rotation == ShapeRotation0)
+    {
+        result.x = position.x;
+        result.y = position.y;
+    }
+    else if (rotation == ShapeRotation90)
+    {
+        result.x = position.y;
+        result.y = -position.x;
+    }
+    else if (rotation == ShapeRotation180)
+    {
+        result.x = -position.x;
+        result.y = -position.y;
+    }
+    else if (rotation == ShapeRotation270)
+    {
+        result.x = -position.y;
+        result.y = position.x;
+    }
+    else
+    {
+        print("Received an unexpected rotation value of ");
+        print_number((int)rotation);
+        print("\n");
+        ExitProcess(1);
+    }
+    return result;
+}
+
+typedef enum
+{
     PointInSpaceEmpty = 0,
     PointInSpaceShapeBody,
     PointInSpaceX,
@@ -27,7 +102,7 @@ PointInSpace get_shape_point(int x, int y, Shape shape)
     return shape.body[y * MAX_FIELD_SIZE + x];
 }
 
-Position get_shape_x_position(Shape shape)
+Position get_shape_x_position(ShapeRotation rotation, Shape shape)
 {
     for (int x = 0; x < shape.width; x++)
     {
@@ -35,10 +110,10 @@ Position get_shape_x_position(Shape shape)
         {
             if (get_shape_point(x, y, shape) == PointInSpaceX)
             {
-                Position result;
-                result.x = x;
-                result.y = y;
-                return result;
+                Position vector;
+                vector.x = x;
+                vector.y = y;
+                return rotate_position(degrees_to_rotation(modulo(-rotation_to_degrees(rotation), 360)), vector);
             }
         }
     }
@@ -179,18 +254,7 @@ bool expect_newline(Parser* parser)
     return false;
 }
 
-bool expect_eof(Parser parser)
-{
-    return parser.source[parser.index] == '\0';
-}
-
-void parsing_failed(Parser parser)
-{
-    print("Parsing failed on line ");
-    print_number(parser.line);
-    print("\n");
-    ExitProcess(1);
-}
+bool expect_eof(Parser parser) { return parser.source[parser.index] == '\0'; }
 
 Input* parse_input(char* source)
 {
@@ -317,7 +381,7 @@ Input* parse_input(char* source)
 
     if (result->shapes_count != result->field_xs_count)
     {
-        print("Expected an equal amount of shapes an Xs on the field, instaed got ");
+        print("Expected an equal amount of shapes an Xs on the field, instead got ");
         print_number(result->field_xs_count); print(" Xs and ");
         print_number(result->shapes_count); print(" shapes\n");
         ExitProcess(1);
@@ -362,6 +426,7 @@ char* read_input_file(char* filename)
 typedef struct
 {
     char shape_name;
+    ShapeRotation rotation;
     int x, y;
 } ShapePositionItem;
 
@@ -371,7 +436,7 @@ typedef struct
     ShapePositionItem items[MAX_SHAPE_COUNT];
 } ShapePositions;
 
-void add_shape_position(char name, int x, int y, ShapePositions* positions)
+void add_shape_position(char name, int x, int y, ShapeRotation rotation, ShapePositions* positions)
 {
     if (positions->count == MAX_SHAPE_COUNT)
     {
@@ -383,6 +448,7 @@ void add_shape_position(char name, int x, int y, ShapePositions* positions)
     positions->items[positions->count].shape_name = name;
     positions->items[positions->count].x = x;
     positions->items[positions->count].y = y;
+    positions->items[positions->count].rotation = rotation;
     positions->count++;
 }
 
@@ -401,10 +467,20 @@ bool shapes_intersect(Shape shape, ShapePositionItem position, Shape other_shape
     {
         for (int y = 0; y < shape.height; y++)
         {
-            if (get_shape_point(x, y, shape) != PointInSpaceEmpty && get_shape_point(x + position.x - other_position.x, y + position.y - other_position.y, other_shape) != PointInSpaceEmpty)
-            {
-                return true;
-            }
+            Position local_rotated_shape_position;
+            local_rotated_shape_position.x = x;
+            local_rotated_shape_position.y = y;
+            Position local_shape_position = rotate_position(degrees_to_rotation(modulo(-rotation_to_degrees(position.rotation), 360)), local_rotated_shape_position);
+            Position field_position;
+            field_position.x = local_shape_position.x + position.x;
+            field_position.y = local_shape_position.y + position.y;
+            Position local_other_shape_position;
+            local_other_shape_position.x = field_position.x - other_position.x;
+            local_other_shape_position.y = field_position.y - other_position.y;
+            Position local_rotated_other_shape_position = rotate_position(other_position.rotation, local_other_shape_position);
+            if (get_shape_point(local_rotated_shape_position.x, local_rotated_shape_position.y, shape) != PointInSpaceEmpty
+                && get_shape_point(local_rotated_other_shape_position.x, local_rotated_other_shape_position.y, other_shape) != PointInSpaceEmpty)
+            { return true; }
         }
     }
     return false;
@@ -416,10 +492,19 @@ bool is_contradictory(ShapePositions positions, Input input)
     {
         ShapePositionItem position = positions.items[i];
         Shape shape = get_shape_by_name(position.shape_name, input);
-        if (position.x < 0 || position.y < 0 || position.x + shape.width > input.field_size || position.y + shape.height > input.field_size) { return true; }
-        for (int j = 0; j < positions.count; j++)
+        // top left corner
+        int actual_x = position.x;
+        if (position.rotation == ShapeRotation90) { actual_x -= shape.height - 1; }
+        else if (position.rotation == ShapeRotation180) { actual_x -= shape.width - 1; }
+        int actual_y = position.y;
+        if (position.rotation == ShapeRotation180) { actual_y -= shape.height - 1; }
+        else if (position.rotation == ShapeRotation270) { actual_y -= shape.width - 1; }
+        // bottom right corner
+        int actual_width = position.rotation == ShapeRotation90 || position.rotation == ShapeRotation270 ? shape.height : shape.width;
+        int actual_height = position.rotation == ShapeRotation90 || position.rotation == ShapeRotation270 ? shape.width : shape.height;
+        if (actual_x < 0 || actual_y < 0 || actual_x + actual_width > input.field_size || actual_y + actual_height > input.field_size) { return true; }
+        for (int j = i + 1; j < positions.count; j++)
         {
-            if (i == j) { continue; }
             ShapePositionItem other_position = positions.items[j];
             Shape other_shape = get_shape_by_name(other_position.shape_name, input);
             if (shapes_intersect(shape, position, other_shape, other_position)) { return true; }
@@ -464,13 +549,23 @@ void find_solutions_loop(ShapePositions* positions, Input* input, Solutions* sol
     {
         Shape shape = input->shapes[i];
         if (do_positions_include_shape(shape.name, *positions)) { continue; }
-        for (int j = 0; j < input->field_xs_count; j++)
+        for (int k = 0; k < countof(ALL_ROTATIONS); k++)
         {
-            Position field_x_position = input->field_xs[j];
-            Position shape_x_position = get_shape_x_position(shape);
-            add_shape_position(shape.name, field_x_position.x - shape_x_position.x, field_x_position.y - shape_x_position.y, positions);
-            find_solutions_loop(positions, input, solutions);
-            positions->count--;
+            ShapeRotation rotation = ALL_ROTATIONS[k];
+            for (int j = 0; j < input->field_xs_count; j++)
+            {
+                Position field_x_position = input->field_xs[j];
+                Position shape_x_position = get_shape_x_position(rotation, shape);
+                add_shape_position(
+                    shape.name,
+                    field_x_position.x - shape_x_position.x,
+                    field_x_position.y - shape_x_position.y,
+                    rotation,
+                    positions
+                );
+                find_solutions_loop(positions, input, solutions);
+                positions->count--;
+            }
         }
         break; // each recursive call checks just one shape
     }

@@ -2,6 +2,8 @@ typedef int bool;
 #define true 1
 #define false 0
 
+#define countof(array) (sizeof(array) / sizeof(array[0]))
+
 int get_c_string_length(char* string)
 {
     int result = 0;
@@ -57,4 +59,11 @@ void print_number(int number)
 void* allocate(int size)
 {
     return VirtualAlloc(NULL, size, MEM_COMMIT, PAGE_READWRITE);
+}
+
+int modulo(int dividend, int divisor)
+{
+    int result = dividend % divisor;
+    if (result < 0) { result += divisor; }
+    return result;
 }
