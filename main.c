@@ -1,10 +1,11 @@
 // TODO:
 // [/] rotations
 // [/] better visualization for solutions
-// [ ] check for shapes overlapping with more than one X
+// [/] check for shapes overlapping with more than one X
 // [/] support non-square fields
 // [ ] comments in input files
 // [/] tests
+// [ ] check for actual solutions in tests
 // [ ] input file as command line parameter
 // [ ] raylib graphics
 
@@ -17,7 +18,7 @@ int main()
 {
     init_stdout();
 
-    char* input_file_text = read_input_file("test files\\biolab.txt");
+    char* input_file_text = read_input_file("test files\\trash disposal room.txt");
 
     Input* parsed_input = parse_input(input_file_text);
 

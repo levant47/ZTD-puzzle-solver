@@ -456,31 +456,48 @@ void add_shape_position(char name, int x, int y, ShapeRotation rotation, ShapePo
 bool do_positions_include_shape(char name, ShapePositions positions)
 {
     for (int i = 0; i < positions.count; i++)
-    {
-        if (positions.items[i].shape_name == name) { return true; }
-    }
+    { if (positions.items[i].shape_name == name) { return true; } }
     return false;
 }
 
-bool shapes_intersect(Shape shape, ShapePositionItem position, Shape other_shape, ShapePositionItem other_position)
+Position position_in_rotated_shape_coordinates_to_field_coordinates(Position position_in_rotated_shape_coordinates, ShapePositionItem shape_position_in_field_coordinates)
 {
-    for (int x = 0; x < shape.width; x++)
+    Position position_in_shape_coordinates = rotate_position(
+        degrees_to_rotation(modulo(-rotation_to_degrees(shape_position_in_field_coordinates.rotation), 360)),
+        position_in_rotated_shape_coordinates
+    );
+    Position position_in_field_coordinates;
+    position_in_field_coordinates.x = position_in_shape_coordinates.x + shape_position_in_field_coordinates.x;
+    position_in_field_coordinates.y = position_in_shape_coordinates.y + shape_position_in_field_coordinates.y;
+    return position_in_field_coordinates;
+}
+
+Position position_in_field_coordinates_to_position_in_rotated_shape_coordinates(Position position_in_field_coordinates, ShapePositionItem shape_position_in_field_coordinates)
+{
+    Position position_in_rotated_shape_coordinates;
+    position_in_rotated_shape_coordinates.x = position_in_field_coordinates.x - shape_position_in_field_coordinates.x;
+    position_in_rotated_shape_coordinates.y = position_in_field_coordinates.y - shape_position_in_field_coordinates.y;
+    return rotate_position(shape_position_in_field_coordinates.rotation, position_in_rotated_shape_coordinates);
+}
+
+bool shapes_intersect(Shape shape_1, ShapePositionItem shape_1_position_in_field_coordinates, Shape shape_2, ShapePositionItem shape_2_position_in_field_coordinates)
+{
+    for (int x = 0; x < shape_1.width; x++)
     {
-        for (int y = 0; y < shape.height; y++)
+        for (int y = 0; y < shape_1.height; y++)
         {
-            Position local_rotated_shape_position;
-            local_rotated_shape_position.x = x;
-            local_rotated_shape_position.y = y;
-            Position local_shape_position = rotate_position(degrees_to_rotation(modulo(-rotation_to_degrees(position.rotation), 360)), local_rotated_shape_position);
-            Position field_position;
-            field_position.x = local_shape_position.x + position.x;
-            field_position.y = local_shape_position.y + position.y;
-            Position local_other_shape_position;
-            local_other_shape_position.x = field_position.x - other_position.x;
-            local_other_shape_position.y = field_position.y - other_position.y;
-            Position local_rotated_other_shape_position = rotate_position(other_position.rotation, local_other_shape_position);
-            if (get_shape_point(local_rotated_shape_position.x, local_rotated_shape_position.y, shape) != PointInSpaceEmpty
-                && get_shape_point(local_rotated_other_shape_position.x, local_rotated_other_shape_position.y, other_shape) != PointInSpaceEmpty)
+            Position position_in_rotated_shape_1_coordinates;
+            position_in_rotated_shape_1_coordinates.x = x;
+            position_in_rotated_shape_1_coordinates.y = y;
+            Position position_in_rotated_shape_2_coordinates = position_in_field_coordinates_to_position_in_rotated_shape_coordinates(
+                position_in_rotated_shape_coordinates_to_field_coordinates(
+                    position_in_rotated_shape_1_coordinates,
+                    shape_1_position_in_field_coordinates
+                ),
+                shape_2_position_in_field_coordinates
+            );
+            if (get_shape_point(position_in_rotated_shape_1_coordinates.x, position_in_rotated_shape_1_coordinates.y, shape_1) != PointInSpaceEmpty
+                && get_shape_point(position_in_rotated_shape_2_coordinates.x, position_in_rotated_shape_2_coordinates.y, shape_2) != PointInSpaceEmpty)
             { return true; }
         }
     }
@@ -493,18 +510,49 @@ bool is_contradictory(ShapePositions positions, Input input)
     {
         ShapePositionItem position = positions.items[i];
         Shape shape = get_shape_by_name(position.shape_name, input);
-        // top left corner
-        int actual_x = position.x;
-        if (position.rotation == ShapeRotation90) { actual_x -= shape.height - 1; }
-        else if (position.rotation == ShapeRotation180) { actual_x -= shape.width - 1; }
-        int actual_y = position.y;
-        if (position.rotation == ShapeRotation180) { actual_y -= shape.height - 1; }
-        else if (position.rotation == ShapeRotation270) { actual_y -= shape.width - 1; }
-        // bottom right corner
-        int actual_width = position.rotation == ShapeRotation90 || position.rotation == ShapeRotation270 ? shape.height : shape.width;
-        int actual_height = position.rotation == ShapeRotation90 || position.rotation == ShapeRotation270 ? shape.width : shape.height;
-        if (actual_x < 0 || actual_y < 0 || actual_x + actual_width > input.field_width || actual_y + actual_height > input.field_height)
-        { return true; }
+
+        // shape does not go outside the field
+        {
+            // top left corner
+            int actual_x = position.x;
+            if (position.rotation == ShapeRotation90) { actual_x -= shape.height - 1; }
+            else if (position.rotation == ShapeRotation180) { actual_x -= shape.width - 1; }
+            int actual_y = position.y;
+            if (position.rotation == ShapeRotation180) { actual_y -= shape.height - 1; }
+            else if (position.rotation == ShapeRotation270) { actual_y -= shape.width - 1; }
+            // bottom right corner
+            int actual_width = position.rotation == ShapeRotation90 || position.rotation == ShapeRotation270
+                ? shape.height : shape.width;
+            int actual_height = position.rotation == ShapeRotation90 || position.rotation == ShapeRotation270
+                ? shape.width : shape.height;
+            if (actual_x < 0 || actual_y < 0
+                || actual_x + actual_width > input.field_width || actual_y + actual_height > input.field_height)
+            { return true; }
+        }
+
+        // shape contains only one X
+        bool one_x_found = false;
+        for (int x = 0; x < shape.width; x++)
+        {
+            for (int y = 0; y < shape.height; y++)
+            {
+                if (get_shape_point(x, y, shape) == PointInSpaceEmpty) { continue; }
+                Position position_in_rotated_shape_coordinates;
+                position_in_rotated_shape_coordinates.x = x;
+                position_in_rotated_shape_coordinates.y = y;
+                Position position_in_field_coordinates = position_in_rotated_shape_coordinates_to_field_coordinates(position_in_rotated_shape_coordinates, position);
+                for (int k = 0; k < input.field_xs_count; k++)
+                {
+                    if (position_in_field_coordinates.x == input.field_xs[k].x && position_in_field_coordinates.y == input.field_xs[k].y)
+                    {
+                        if (one_x_found) { return true; }
+                        one_x_found = true;
+                    }
+                }
+            }
+        }
+
+        // shape does not intersect other shapes
         for (int j = i + 1; j < positions.count; j++)
         {
             ShapePositionItem other_position = positions.items[j];
