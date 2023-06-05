@@ -1,5 +1,5 @@
 #define MAX_INPUT_SIZE 1000
-#define MAX_FIELD_SIZE 10 // meaning 10 by 10
+#define MAX_FIELD_SIZE 10 // both width and height
 #define MAX_SHAPE_COUNT 10
 #define MAX_X_COUNT 10
 #define MAX_SOLUTIONS 10
@@ -142,7 +142,7 @@ void add_point_to_shape(int x, int y, PointInSpace point, Shape* shape)
 
 typedef struct
 {
-    int field_size;
+    int field_width, field_height;
     int field_xs_count;
     Position field_xs[MAX_X_COUNT];
     int shapes_count;
@@ -273,12 +273,12 @@ Input* parse_input(char* source)
                 ExitProcess(1);
             }
 
-            int field_size = 0;
+            int field_width = 0;
             int x = 0;
             int y = 0;
             do
             {
-                if (y != 0 && y >= field_size)
+                if (y != 0 && y >= field_width)
                 {
                     print("Line ");
                     print_number(parser.line);
@@ -303,13 +303,14 @@ Input* parse_input(char* source)
 
                 if (expect_newline(&parser) || expect_eof(parser))
                 {
-                    if (y == 0) { field_size = x; }
+                    if (y == 0) { field_width = x; }
                     x = 0;
                     y++;
                 }
             }
             while (!expect_newline(&parser) && !expect_eof(parser)); // two newlines in a row or end of the file means we're done with the block
-            result->field_size = field_size;
+            result->field_width = field_width;
+            result->field_height = y;
         }
         else if (expect_newline(&parser)) { /* skip blank lines */ }
         else
@@ -502,7 +503,8 @@ bool is_contradictory(ShapePositions positions, Input input)
         // bottom right corner
         int actual_width = position.rotation == ShapeRotation90 || position.rotation == ShapeRotation270 ? shape.height : shape.width;
         int actual_height = position.rotation == ShapeRotation90 || position.rotation == ShapeRotation270 ? shape.width : shape.height;
-        if (actual_x < 0 || actual_y < 0 || actual_x + actual_width > input.field_size || actual_y + actual_height > input.field_size) { return true; }
+        if (actual_x < 0 || actual_y < 0 || actual_x + actual_width > input.field_width || actual_y + actual_height > input.field_height)
+        { return true; }
         for (int j = i + 1; j < positions.count; j++)
         {
             ShapePositionItem other_position = positions.items[j];
@@ -584,13 +586,13 @@ Solutions find_solutions(Input* input)
 
 void visualize_solution(ShapePositions positions, Input* input)
 {
-    char* field = allocate(input->field_size * input->field_size);
+    char* field = allocate(input->field_width * input->field_height);
     // initialize to an empty field
-    for (int x = 0; x < input->field_size; x++)
+    for (int x = 0; x < input->field_width; x++)
     {
-        for (int y = 0; y < input->field_size; y++)
+        for (int y = 0; y < input->field_height; y++)
         {
-            field[y * input->field_size + x] = '.';
+            field[y * input->field_width + x] = '.';
         }
     }
 
@@ -611,17 +613,17 @@ void visualize_solution(ShapePositions positions, Input* input)
                 Position field_position = rotate_position(degrees_to_rotation(modulo(-rotation_to_degrees(position.rotation), 360)), local_position);
                 field_position.x += position.x;
                 field_position.y += position.y;
-                field[field_position.y * input->field_size + field_position.x] = point == PointInSpaceX ? 'X' : shape.name;
+                field[field_position.y * input->field_width + field_position.x] = point == PointInSpaceX ? 'X' : shape.name;
             }
         }
     }
 
     // output
-    for (int y = 0; y < input->field_size; y++)
+    for (int y = 0; y < input->field_height; y++)
     {
-        for (int x = 0; x < input->field_size; x++)
+        for (int x = 0; x < input->field_width; x++)
         {
-            print_char(field[y * input->field_size + x]);
+            print_char(field[y * input->field_width + x]);
         }
         print("\n");
     }

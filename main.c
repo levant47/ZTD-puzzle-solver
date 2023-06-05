@@ -1,8 +1,8 @@
 // TODO:
 // [/] rotations
 // [/] better visualization for solutions
-// [ ] check for shapes overlapping more than one X
-// [ ] support non-square fields
+// [ ] check for shapes overlapping with more than one X
+// [/] support non-square fields
 // [ ] comments in input files
 // [/] tests
 // [ ] input file as command line parameter
@@ -22,9 +22,9 @@ int main()
     Input* parsed_input = parse_input(input_file_text);
 
     print("Parsed field of size ");
-    print_number(parsed_input->field_size);
+    print_number(parsed_input->field_width);
     print("x");
-    print_number(parsed_input->field_size);
+    print_number(parsed_input->field_height);
     print(" and ");
     print_number(parsed_input->shapes_count);
     print(" shapes\n");
