@@ -328,7 +328,8 @@ Input* parse_input(char* source)
             bool x_found = false;
             int x = 0;
             int y = 0;
-            Shape shape = {};
+            Shape shape;
+            set_memory(sizeof(shape), &shape, 0);
             shape.name = shape_name;
             do
             {
@@ -595,17 +596,51 @@ void find_solutions_loop(ShapePositions* positions, Input* input, Solutions* sol
         return;
     }
 
+    // find shape with the lowest amount of possible placements
+    int target_shape_possible_placements = MAX_S32;
+    int target_shape_index = MAX_S32; // so that it would crash immediately in case of a bug
     for (int i = 0; i < input->shapes_count; i++)
     {
         Shape shape = input->shapes[i];
         if (do_positions_include_shape(shape.name, *positions)) { continue; }
+        int possible_placements = 0;
         for (int k = 0; k < countof(ALL_ROTATIONS); k++)
         {
             ShapeRotation rotation = ALL_ROTATIONS[k];
+            Position shape_x_position = get_shape_x_position(rotation, shape);
             for (int j = 0; j < input->field_xs_count; j++)
             {
                 Position field_x_position = input->field_xs[j];
-                Position shape_x_position = get_shape_x_position(rotation, shape);
+                add_shape_position(
+                    shape.name,
+                    field_x_position.x - shape_x_position.x,
+                    field_x_position.y - shape_x_position.y,
+                    rotation,
+                    positions
+                );
+                if (!is_contradictory(*positions, *input)) { possible_placements++; }
+                positions->count--;
+            }
+        }
+        if (possible_placements < target_shape_possible_placements)
+        {
+             target_shape_possible_placements = possible_placements;
+             target_shape_index = i;
+        }
+    }
+    // if there is nowhere left to place at least one shape, then this is an incorrect solution
+    if (target_shape_possible_placements == 0) { return; }
+
+    // loop through all possible placements of the shape with the lowest amount of possible placements
+    {
+        Shape shape = input->shapes[target_shape_index];
+        for (int k = 0; k < countof(ALL_ROTATIONS); k++)
+        {
+            ShapeRotation rotation = ALL_ROTATIONS[k];
+            Position shape_x_position = get_shape_x_position(rotation, shape);
+            for (int j = 0; j < input->field_xs_count; j++)
+            {
+                Position field_x_position = input->field_xs[j];
                 add_shape_position(
                     shape.name,
                     field_x_position.x - shape_x_position.x,
@@ -617,7 +652,6 @@ void find_solutions_loop(ShapePositions* positions, Input* input, Solutions* sol
                 positions->count--;
             }
         }
-        break; // each recursive call checks just one shape
     }
 }
 

@@ -4,6 +4,8 @@ typedef int bool;
 
 #define countof(array) (sizeof(array) / sizeof(array[0]))
 
+const int MAX_S32 = 2147483647;
+
 int get_c_string_length(char* string)
 {
     int result = 0;
@@ -66,4 +68,13 @@ int modulo(int dividend, int divisor)
     int result = dividend % divisor;
     if (result < 0) { result += divisor; }
     return result;
+}
+
+void set_memory(int size, void* data, char value)
+{
+    char* byte_data = (char*)data;
+    for (int i = 0; i < size; i++)
+    {
+        byte_data[i] = value;
+    }
 }
