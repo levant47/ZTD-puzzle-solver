@@ -7,7 +7,7 @@
 // [/] tests
 // [/] check for actual solutions in tests
 // [/] input file as command line parameter
-// [ ] ignore different rotations of symmetrical shapes (right now power room and puzzle 3 has duplicate solutions because of this)
+// [/] ignore different rotations of symmetrical shapes (otherwise, power room and puzzle 3 have duplicate solutions)
 // [ ] raylib graphics
 // [ ] readme
 

@@ -3,25 +3,6 @@
 #include "utils.c"
 #include "solver.c"
 
-void test3(char *filename, int field_width, int field_height, int xs_count, int solutions_count, bool exceeded)
-{
-    char* input_file_text = read_input_file(filename);
-    Input* parsed_input = parse_input(input_file_text);
-    Solutions solutions = find_solutions(parsed_input);
-
-    if (
-        parsed_input->field_width != field_width
-            || parsed_input->field_height != field_height
-            || parsed_input->field_xs_count != xs_count
-            || solutions.count != solutions_count
-            || solutions.exceeded != exceeded
-    )
-    {
-        print(filename);
-        print(" test3: failed\n");
-    }
-}
-
 void test(char* filename, int solution_count, char* some_solution)
 {
     char* input_file_text = read_input_file(filename);
@@ -44,7 +25,7 @@ void test(char* filename, int solution_count, char* some_solution)
     }
     if (failed)
     {
-        print(filename); print(" test3 failed\n");
+        print(filename); print(": failed\n");
     }
 }
 
@@ -86,6 +67,11 @@ int main()
         "XBX\n"
         ".BA\n"
     );
+    test("test files\\puzzle5.txt", 1,
+        "AAA\n"
+        "AXA\n"
+        "AAA\n"
+    );
     test("test files\\biolab.txt", 1,
         "XCXCCCAAAA\n"
         "BCCCCCAAXA\n"
@@ -105,6 +91,16 @@ int main()
         ".AAA...ECC\n"
         "AXACCCCCCX\n"
         ".AAA....CC\n"
+    );
+    test("test files\\power room.txt", 3,
+        "BXSSSAA...\n"
+        "BBSSSAACCC\n"
+        "BBXSXAAAX.\n"
+        "BBSSS.XCCC\n"
+        "XGSSSFFF..\n"
+        "GPXP.FFFX.\n"
+        "GPPPOOFDDD\n"
+        "..P.XO.DDD\n"
     );
 
     print("Done\n");

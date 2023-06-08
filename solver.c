@@ -93,6 +93,8 @@ typedef struct
     int width;
     int height;
     char name;
+    bool is_completely_symmetrical;
+    bool is_vertically_symmetrical;
     PointInSpace body[MAX_FIELD_SIZE * MAX_FIELD_SIZE];
 } Shape;
 
@@ -100,6 +102,38 @@ PointInSpace get_shape_point(int x, int y, Shape shape)
 {
     if (x < 0 || y < 0 || x >= shape.width || y >= shape.height) { return PointInSpaceEmpty; }
     return shape.body[y * MAX_FIELD_SIZE + x];
+}
+
+// meaning top and bottom halves can be flipped without any effect
+bool is_shape_vertically_symmetrical(Shape shape)
+{
+    for (int x = 0; x < shape.width; x++)
+    {
+        for (int y = 0; y < shape.height; y++)
+        {
+            if (get_shape_point(x, y, shape) != get_shape_point(shape.width - x - 1, shape.height - y - 1, shape))
+            {
+                return false;
+            }
+            if (x == shape.width / 2 && y == shape.height / 2) { return true; } // no need to check the cells twice
+        }
+    }
+}
+
+bool is_shape_completely_symmetrical(Shape shape)
+{
+    for (int x = 0; x < shape.width / 2; x++)
+    {
+        for (int y = 0; y < shape.height; y++)
+        {
+            // we check whether the shape remains the same if we rotate it by 90 degrees (I hope this check actually guarantees symmetry)
+            if (get_shape_point(x, y, shape) != get_shape_point(y, shape.width - x - 1, shape))
+            {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 Position get_shape_x_position(ShapeRotation rotation, Shape shape)
@@ -402,6 +436,8 @@ Input* parse_input(char* source)
                 ExitProcess(1);
             }
 
+            shape.is_completely_symmetrical = is_shape_completely_symmetrical(shape);
+            shape.is_vertically_symmetrical = is_shape_vertically_symmetrical(shape);
             add_shape_to_input(shape, result);
         }
     }
@@ -662,6 +698,8 @@ void find_solutions_loop(ShapePositions* positions, Input* input, Solutions* sol
         for (int k = 0; k < countof(ALL_ROTATIONS); k++)
         {
             ShapeRotation rotation = ALL_ROTATIONS[k];
+            if ((rotation == ShapeRotation180 || rotation == ShapeRotation270) && shape.is_vertically_symmetrical) { continue; }
+            if (rotation == ShapeRotation90 && shape.is_completely_symmetrical) { continue; }
             Position shape_x_position = get_shape_x_position(rotation, shape);
             for (int j = 0; j < input->field_xs_count; j++)
             {
