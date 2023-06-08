@@ -312,8 +312,12 @@ Input* parse_input(char* source)
             result->field_width = field_width;
             result->field_height = y;
         }
-        else if (expect_newline(&parser)) { /* skip blank lines */ }
-        else
+        else if (expect_newline(&parser)) { } // skip blank lines
+        else if (expect("#", &parser)) // comment (comments can only start at the beginning of the line and take up the whole line)
+        {
+            while (!expect_newline(&parser) || expect_eof(parser)) { next(&parser); }
+        }
+        else // shape
         {
             char shape_name = current(parser);
             next(&parser);

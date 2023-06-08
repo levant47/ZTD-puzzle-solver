@@ -3,7 +3,7 @@
 // [/] better visualization for solutions
 // [/] check for shapes overlapping with more than one X
 // [/] support non-square fields
-// [ ] comments in input files
+// [/] comments in input files
 // [/] tests
 // [ ] check for actual solutions in tests
 // [/] input file as command line parameter

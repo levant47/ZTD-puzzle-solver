@@ -8,15 +8,18 @@ X.........
 .X.......X
 ..........
 
+# wire cutter
 A
 ...
  .X.
 ...
 
+# tape measure
 B
 X.
 ..
 
+# hammer
 C
  .
  .
@@ -26,17 +29,20 @@ C
 ...
 .X.
 
+# wrench
 D
 ..
 ..
 ..
 .X
 
+# lug wrench
 E
  X
 ...
  .
 
+# file tool
 F
 .
 X
@@ -44,6 +50,7 @@ X
 .
 .
 
+# saw
 G
    X
    .

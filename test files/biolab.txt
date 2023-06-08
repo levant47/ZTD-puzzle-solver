@@ -8,18 +8,21 @@ X.X.......
 ..........
 ..........
 
+# bird
 A
 ...
 .X.
 ..
 ..
 
+# seahorse
 B
 ..
 ..
  .
  X
 
+# fish
 C
 ..
 .X
@@ -27,6 +30,7 @@ C
 ..
 ..
 
+# snake
 D
  X
  .
@@ -36,20 +40,24 @@ D
 ...
 ...
 
+# tiny octopus
 E
 X
 .
 
+# shrimp
 F
 X..
   .
 
+# frog
 G
  X.
 ....
 ....
 ....
 
+# lizard
 H
 .....
 .....
