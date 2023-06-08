@@ -328,6 +328,27 @@ Input* parse_input(char* source)
                 print("\n");
                 ExitProcess(1);
             }
+            if (shape_name == 'X' || shape_name == ' ' || shape_name == '\t' || shape_name == '.')
+            {
+                print("Shape name '");
+                print_char(shape_name);
+                print("' is invalid (line ");
+                print_number(parser.line);
+                print(")\n");
+                ExitProcess(1);
+            }
+            for (int i = 0; i < result->shapes_count; i++)
+            {
+                if (result->shapes[i].name == shape_name)
+                {
+                    print("Duplicate shape name '");
+                    print_char(shape_name);
+                    print("' on line ");
+                    print_number(parser.line);
+                    print("\n");
+                    ExitProcess(1);
+                }
+            }
 
             bool x_found = false;
             int x = 0;

@@ -7,6 +7,7 @@
 // [/] tests
 // [ ] check for actual solutions in tests
 // [/] input file as command line parameter
+// [ ] ignore different rotations of symmetrical shapes (right now power room has duplicate solutions because of this)
 // [ ] raylib graphics
 
 #include <windows.h>
@@ -18,11 +19,11 @@ int main(int argument_count, char** argument_data)
 {
     init_stdout();
 
-    if (argument_count < 1) { return -1; } // we expect at least one argument which is the program name
+    if (argument_count < 1) { return 1; } // we expect at least one argument which is the program name
     if (argument_count != 2)
     {
         print("USAGE: "); print(argument_data[0]); print(" <path to input file>\n");
-        return -1;
+        return 1;
     }
 
     char* input_file_path = argument_data[1];
