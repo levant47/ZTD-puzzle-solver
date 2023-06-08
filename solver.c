@@ -691,17 +691,19 @@ Solutions find_solutions(Input* input)
     return solutions;
 }
 
-void visualize_solution(ShapePositions positions, Input* input)
+char* visualize_solution(ShapePositions positions, Input* input)
 {
-    char* field = allocate(input->field_width * input->field_height);
+    // (width + 1) because of newlines and + 1 to the whole expression for the terminating byte
+    char* field = allocate((input->field_width + 1) * input->field_height + 1);
     // initialize to an empty field
-    for (int x = 0; x < input->field_width; x++)
+    for (int x = 0; x < input->field_width + 1; x++)
     {
         for (int y = 0; y < input->field_height; y++)
         {
-            field[y * input->field_width + x] = '.';
+            field[y * (input->field_width + 1) + x] = x != input->field_width ? '.' : '\n';
         }
     }
+    field[(input->field_width + 1) * input->field_height] = '\0';
 
     // copy shapes
     for (int i = 0; i < positions.count; i++)
@@ -720,18 +722,10 @@ void visualize_solution(ShapePositions positions, Input* input)
                 Position field_position = rotate_position(degrees_to_rotation(modulo(-rotation_to_degrees(position.rotation), 360)), local_position);
                 field_position.x += position.x;
                 field_position.y += position.y;
-                field[field_position.y * input->field_width + field_position.x] = point == PointInSpaceX ? 'X' : shape.name;
+                field[field_position.y * (input->field_width + 1) + field_position.x] = point == PointInSpaceX ? 'X' : shape.name;
             }
         }
     }
 
-    // output
-    for (int y = 0; y < input->field_height; y++)
-    {
-        for (int x = 0; x < input->field_width; x++)
-        {
-            print_char(field[y * input->field_width + x]);
-        }
-        print("\n");
-    }
+    return field;
 }

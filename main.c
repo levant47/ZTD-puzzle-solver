@@ -5,10 +5,11 @@
 // [/] support non-square fields
 // [/] comments in input files
 // [/] tests
-// [ ] check for actual solutions in tests
+// [/] check for actual solutions in tests
 // [/] input file as command line parameter
-// [ ] ignore different rotations of symmetrical shapes (right now power room has duplicate solutions because of this)
+// [ ] ignore different rotations of symmetrical shapes (right now power room and puzzle 3 has duplicate solutions because of this)
 // [ ] raylib graphics
+// [ ] readme
 
 #include <windows.h>
 
@@ -58,7 +59,7 @@ int main(int argument_count, char** argument_data)
     for (int j = 0; j < solutions.count; j++)
     {
         print("Solution "); print_number(j + 1); print(":\n");
-        visualize_solution(solutions.data[j], parsed_input);
+        print(visualize_solution(solutions.data[j], parsed_input));
         print("\n");
     }
 

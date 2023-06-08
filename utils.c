@@ -78,3 +78,12 @@ void set_memory(int size, void* data, char value)
         byte_data[i] = value;
     }
 }
+
+bool are_strings_equal(char* left, char* right)
+{
+    for (int i = 0; true; i++)
+    {
+        if (left[i] != right[i]) { return false; }
+        if (left[i] == '\0') { return true; }
+    }
+}
