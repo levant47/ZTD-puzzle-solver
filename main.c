@@ -6,7 +6,7 @@
 // [ ] comments in input files
 // [/] tests
 // [ ] check for actual solutions in tests
-// [ ] input file as command line parameter
+// [/] input file as command line parameter
 // [ ] raylib graphics
 
 #include <windows.h>
@@ -14,11 +14,19 @@
 #include "utils.c"
 #include "solver.c"
 
-int main()
+int main(int argument_count, char** argument_data)
 {
     init_stdout();
 
-    char* input_file_text = read_input_file("test files\\trash disposal room.txt");
+    if (argument_count < 1) { return -1; } // we expect at least one argument which is the program name
+    if (argument_count != 2)
+    {
+        print("USAGE: "); print(argument_data[0]); print(" <path to input file>\n");
+        return -1;
+    }
+
+    char* input_file_path = argument_data[1];
+    char* input_file_text = read_input_file(input_file_path);
 
     Input* parsed_input = parse_input(input_file_text);
 

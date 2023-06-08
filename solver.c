@@ -405,7 +405,7 @@ char* read_input_file(char* filename)
     );
     if (input_file == INVALID_HANDLE_VALUE)
     {
-        print("Failed to open "); print(filename); print("\n");
+        print("Failed to open \""); print(filename); print("\"\n");
         ExitProcess(1);
     }
 
