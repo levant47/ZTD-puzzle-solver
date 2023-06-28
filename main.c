@@ -8,13 +8,16 @@
 // [/] check for actual solutions in tests
 // [/] input file as command line parameter
 // [/] ignore different rotations of symmetrical shapes (otherwise, power room and puzzle 3 have duplicate solutions)
-// [ ] raylib graphics
+// [X] raylib graphics (raylib turned out to be too hard to use because of all of the linking problems)
+// [ ] WinAPI graphics
+// [ ] clean-up
 // [ ] readme
 
 #include <windows.h>
 
 #include "utils.c"
 #include "solver.c"
+#include "graphics.c"
 
 int main(int argument_count, char** argument_data)
 {
@@ -32,6 +35,8 @@ int main(int argument_count, char** argument_data)
 
     Input* parsed_input = parse_input(input_file_text);
 
+    // TODO: remove this
+    /*
     print("Parsed field of size ");
     print_number(parsed_input->field_width);
     print("x");
@@ -50,8 +55,12 @@ int main(int argument_count, char** argument_data)
         print("\n");
     }
     print("\n");
+    */
 
     Solutions solutions = find_solutions(parsed_input);
+
+    // TODO: remove this
+    /*
     print("Found ");
     if (solutions.exceeded) { print("more than "); }
     print_number(solutions.count);
@@ -59,9 +68,13 @@ int main(int argument_count, char** argument_data)
     for (int j = 0; j < solutions.count; j++)
     {
         print("Solution "); print_number(j + 1); print(":\n");
-        print(visualize_solution(solutions.data[j], parsed_input));
+        print(visualize_solution_to_text(solutions.data[j], parsed_input));
         print("\n");
     }
+    */
+
+    Bitmap solutions_bitmap = visualize_solutions_to_bitmap(solutions, parsed_input);
+    show_solution_bitmap_in_window(solutions_bitmap);
 
     return 0;
 }

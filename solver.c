@@ -729,7 +729,7 @@ Solutions find_solutions(Input* input)
     return solutions;
 }
 
-char* visualize_solution(ShapePositions positions, Input* input)
+char* visualize_solution_to_text(ShapePositions positions, Input* input)
 {
     // (width + 1) because of newlines and + 1 to the whole expression for the terminating byte
     char* field = allocate((input->field_width + 1) * input->field_height + 1);

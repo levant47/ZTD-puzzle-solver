@@ -15,7 +15,7 @@ void test(char* filename, int solution_count, char* some_solution)
         bool matching_solution_found = false;
         for (int i = 0; i < solutions.count; i++)
         {
-            if (are_strings_equal(some_solution, visualize_solution(solutions.data[i], parsed_input)))
+            if (are_strings_equal(some_solution, visualize_solution_to_text(solutions.data[i], parsed_input)))
             {
                 matching_solution_found = true;
                 break;
