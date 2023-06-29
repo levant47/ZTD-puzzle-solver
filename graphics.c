@@ -11,6 +11,19 @@ typedef struct
     Pixel* data; // ARGB
 } Bitmap;
 
+Pixel ALL_SHAPE_COLORS[] =
+{
+    0xff0000ff,
+    0xff00ff00,
+    0xffff0000,
+    0xff00ffff,
+    0xffff00ff,
+    0xffffff00,
+    0xff808080,
+    0xffff8000,
+    0xff0080ff,
+};
+
 void set_pixel_in_bitmap(int x, int y, Pixel value, Bitmap bitmap) { bitmap.data[y * bitmap.width + x] = value; }
 
 Pixel get_pixel_in_bitmap(int x, int y, Bitmap bitmap) { return bitmap.data[y * bitmap.width + x]; }
@@ -128,8 +141,16 @@ Bitmap visualize_solutions_to_bitmap(Solutions solutions, Input* input)
                 Position field_position = rotate_position(degrees_to_rotation(modulo(-rotation_to_degrees(position.rotation), 360)), local_position);
                 field_position.x += position.x;
                 field_position.y += position.y;
-                // TODO: color per shape
-                draw_shape_letter(field_position.x * CELL_SIZE_IN_PIXELS, field_position.y * CELL_SIZE_IN_PIXELS, CELL_SIZE_IN_PIXELS, CELL_SIZE_IN_PIXELS, point == PointInSpaceX ? 'X' : shape.name, 0xffff0000, device_context, solution_bitmap);
+                draw_shape_letter(
+                    field_position.x * CELL_SIZE_IN_PIXELS,
+                    field_position.y * CELL_SIZE_IN_PIXELS,
+                    CELL_SIZE_IN_PIXELS,
+                    CELL_SIZE_IN_PIXELS,
+                    point == PointInSpaceX ? 'X' : shape.name,
+                    ALL_SHAPE_COLORS[i % countof(ALL_SHAPE_COLORS)],
+                    device_context,
+                    solution_bitmap
+                );
             }
         }
     }
