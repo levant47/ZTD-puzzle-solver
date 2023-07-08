@@ -11,6 +11,15 @@ typedef struct
     Pixel* data; // ARGB
 } Bitmap;
 
+Bitmap allocate_bitmap(int width, int height)
+{
+    Bitmap result;
+    result.width = width;
+    result.height = height;
+    result.data = (Pixel*)allocate(result.width * result.height * sizeof(*result.data));
+    return result;
+}
+
 Pixel ALL_SHAPE_COLORS[] =
 {
     0xff0000ff,
@@ -23,6 +32,51 @@ Pixel ALL_SHAPE_COLORS[] =
     0xffff8000,
     0xff0080ff,
 };
+
+typedef struct
+{
+    HDC temporary_device_context;
+    HFONT letter_font;
+} RenderingState;
+
+RenderingState make_rendering_state()
+{
+    RenderingState result;
+    result.temporary_device_context = NULL;
+    result.letter_font = NULL;
+    return result;
+}
+
+HDC get_temporary_device_context_from_rendering_state(RenderingState* rendering_state)
+{
+    if (rendering_state->temporary_device_context == NULL)
+    {
+        rendering_state->temporary_device_context = CreateCompatibleDC(NULL);
+    }
+    return rendering_state->temporary_device_context;
+}
+
+void release_rendering_state(RenderingState* rendering_state)
+{
+    if (rendering_state->letter_font != NULL)
+    {
+        DeleteObject(rendering_state->letter_font);
+        rendering_state->letter_font = NULL;
+    }
+    if (rendering_state->temporary_device_context != NULL)
+    {
+        DeleteDC(rendering_state->temporary_device_context);
+        rendering_state->temporary_device_context = NULL;
+    }
+}
+
+struct
+{
+    Bitmap screen;
+    Solutions solutions;
+    Input* input;
+    Bitmap letter_bitmaps[128];
+} STATE;
 
 void set_pixel_in_bitmap(int x, int y, Pixel value, Bitmap bitmap) { bitmap.data[y * bitmap.width + x] = value; }
 
@@ -56,75 +110,82 @@ TextDimensions get_text_dimensions(char* text, int text_length, HDC device_conte
     return result;
 }
 
-void draw_shape_letter(int x0, int y0, int width, int height, char letter, Pixel color, HDC device_context, Bitmap bitmap)
+void draw_shape_letter(int x0, int y0, int width, int height, char letter, Pixel color, RenderingState* rendering_state, Bitmap bitmap)
 {
-    TextDimensions letter_dimensions = get_text_dimensions(&letter, 1, device_context);
-    HBITMAP letter_bitmap = CreateCompatibleBitmap(device_context, letter_dimensions.width, letter_dimensions.height);
-    SelectObject(device_context, letter_bitmap);
-    TextOutA(device_context, 0, 0, &letter, 1);
-    int x_padding = (width - letter_dimensions.width) / 2;
-    int y_padding = (height - letter_dimensions.height) / 2;
-    for (int y = 0; y < letter_dimensions.height; y++)
+    Bitmap letter_bitmap = STATE.letter_bitmaps[letter];
+    if (letter_bitmap.width == 0) // if it hasn't been cached yet
     {
-        for (int x = 0; x < letter_dimensions.width; x++)
+        HDC temporary_device_context = get_temporary_device_context_from_rendering_state(rendering_state);
+        if (rendering_state->letter_font == NULL)
         {
-            if (GetPixel(device_context, x, y) == 0)
+            rendering_state->letter_font = CreateFontA(
+                CELL_SIZE_IN_PIXELS * 0.8,
+                0,
+                0,
+                0,
+                FW_NORMAL,
+                FALSE,
+                FALSE,
+                FALSE,
+                DEFAULT_CHARSET,
+                OUT_DEFAULT_PRECIS,
+                CLIP_DEFAULT_PRECIS,
+                DEFAULT_QUALITY,
+                DEFAULT_PITCH | FF_DONTCARE,
+                NULL
+            );
+        }
+        SelectObject(temporary_device_context, rendering_state->letter_font);
+        TextDimensions letter_dimensions = get_text_dimensions(&letter, 1, temporary_device_context);
+        letter_bitmap = allocate_bitmap(letter_dimensions.width, letter_dimensions.height);
+        HBITMAP letter_windows_bitmap = CreateCompatibleBitmap(temporary_device_context, letter_dimensions.width, letter_dimensions.height);
+        SelectObject(temporary_device_context, letter_windows_bitmap);
+        TextOutA(temporary_device_context, 0, 0, &letter, 1);
+        for (int y = 0; y < letter_dimensions.height; y++)
+        {
+            for (int x = 0; x < letter_dimensions.width; x++)
+            {
+                if (GetPixel(temporary_device_context, x, y) == 0)
+                {
+                    set_pixel_in_bitmap(x, y, 0xff000000 /* black */, letter_bitmap);
+                }
+            }
+        }
+        DeleteObject(letter_windows_bitmap);
+        STATE.letter_bitmaps[letter] = letter_bitmap;
+    }
+    int x_padding = (width - letter_bitmap.width) / 2;
+    int y_padding = (height - letter_bitmap.height) / 2;
+    for (int y = 0; y < letter_bitmap.height; y++)
+    {
+        for (int x = 0; x < letter_bitmap.width; x++)
+        {
+            if (get_pixel_in_bitmap(x, y, letter_bitmap) == 0xff000000 /* black */)
             {
                 set_pixel_in_bitmap(x + x0 + x_padding, y + y0 + y_padding, color, bitmap);
             }
         }
     }
-    DeleteObject(letter_bitmap);
 }
 
-Bitmap visualize_solutions_to_bitmap(Solutions solutions, Input* input)
+void render_solution(int x0, int x1, int y_padding, ShapePositions positions, Input* input, RenderingState* rendering_state, Bitmap bitmap)
 {
-    if (solutions.count != 1)
-    {
-        print("visualize_solutions_to_bitmap only supports visualizing a single solution right now, but got ");
-        print_number(solutions.count);
-        print("\n");
-        ExitProcess(1);
-    }
+    int field_width_in_pixels = CELL_SIZE_IN_PIXELS * input->field_width;
+    int field_height_in_pixels = CELL_SIZE_IN_PIXELS * input->field_height;
+    int cell_size = CELL_SIZE_IN_PIXELS;
+    int x_padding = (x1 - x0 - field_width_in_pixels) / 2;
 
-    Bitmap solution_bitmap;
-    solution_bitmap.width = CELL_SIZE_IN_PIXELS * input->field_width;
-    solution_bitmap.height = CELL_SIZE_IN_PIXELS * input->field_height;
-    int data_size = solution_bitmap.width * solution_bitmap.height * sizeof(*solution_bitmap.data);
-    solution_bitmap.data = (Pixel*)allocate(data_size);
-    set_memory(data_size, solution_bitmap.data, 0);
-
-    int cell_size = solution_bitmap.width / input->field_width; // pixels
     for (int row = 0; row <= input->field_height; row++)
     {
         int adjustment_for_last_row = row == input->field_height ? -1 : 0;
-        draw_horizontal_line(0, solution_bitmap.width, row * cell_size + adjustment_for_last_row, GRID_COLOR, solution_bitmap);
+        draw_horizontal_line(x_padding, x_padding + field_width_in_pixels, y_padding + row * cell_size + adjustment_for_last_row, GRID_COLOR, bitmap);
     }
     for (int column = 0; column <= input->field_width; column++)
     {
         int adjustment_for_last_column = column == input->field_width ? -1 : 0;
-        draw_vertical_line(column * cell_size + adjustment_for_last_column, 0, solution_bitmap.height, GRID_COLOR, solution_bitmap);
+        draw_vertical_line(x_padding + column * cell_size + adjustment_for_last_column, y_padding, y_padding + field_height_in_pixels, GRID_COLOR, bitmap);
     }
 
-    HDC device_context = CreateCompatibleDC(NULL);
-    HFONT font = CreateFontA(
-        CELL_SIZE_IN_PIXELS * 0.8,
-        0,
-        0,
-        0,
-        FW_NORMAL,
-        FALSE,
-        FALSE,
-        FALSE,
-        DEFAULT_CHARSET,
-        OUT_DEFAULT_PRECIS,
-        CLIP_DEFAULT_PRECIS,
-        DEFAULT_QUALITY,
-        DEFAULT_PITCH | FF_DONTCARE,
-        NULL
-    );
-    SelectObject(device_context, font);
-    ShapePositions positions = solutions.data[0];
     for (int i = 0; i < positions.count; i++)
     {
         ShapePositionItem position = positions.items[i];
@@ -142,60 +203,35 @@ Bitmap visualize_solutions_to_bitmap(Solutions solutions, Input* input)
                 field_position.x += position.x;
                 field_position.y += position.y;
                 draw_shape_letter(
-                    field_position.x * CELL_SIZE_IN_PIXELS,
-                    field_position.y * CELL_SIZE_IN_PIXELS,
+                    x_padding + field_position.x * CELL_SIZE_IN_PIXELS,
+                    y_padding + field_position.y * CELL_SIZE_IN_PIXELS,
                     CELL_SIZE_IN_PIXELS,
                     CELL_SIZE_IN_PIXELS,
                     point == PointInSpaceX ? 'X' : shape.name,
                     ALL_SHAPE_COLORS[i % countof(ALL_SHAPE_COLORS)],
-                    device_context,
-                    solution_bitmap
+                    rendering_state,
+                    bitmap
                 );
             }
         }
     }
-    DeleteObject(font);
-    DeleteDC(device_context);
-
-    return solution_bitmap;
 }
 
-// TODO: put this into a WindowState struct
-Bitmap SCREEN;
-Bitmap SOLUTIONS_BITMAP;
-
-void render_screen()
+void render_window(RenderingState* rendering_state, Bitmap bitmap)
 {
     // clear the whole screen to white
-    for (int y = 0; y < SCREEN.height; y++)
+    for (int y = 0; y < bitmap.height; y++)
     {
-        for (int x = 0; x < SCREEN.width; x++)
+        for (int x = 0; x < bitmap.width; x++)
         {
-            set_pixel_in_bitmap(x, y, 0xffffffff, SCREEN);
+            set_pixel_in_bitmap(x, y, 0xffffffff, bitmap);
         }
-    }
-
-    if (SCREEN.width < SOLUTIONS_BITMAP.width)
-    {
-        MessageBox(/* window handle: */ NULL, "Assertion failed", "Error", MB_OK);
-        ExitProcess(1);
     }
 
     // TODO: support scrolling
 
     // copy the solution bitmap to the center of the screen
-    int top_padding = 10;
-    int side_padding = (SCREEN.width - SOLUTIONS_BITMAP.width) / 2;
-    for (int y = 0; y < min(SOLUTIONS_BITMAP.height, SCREEN.height - top_padding); y++)
-    {
-        for (int x = 0; x < SOLUTIONS_BITMAP.width; x++)
-        {
-            int solutions_bitmap_pixel = get_pixel_in_bitmap(x, y, SOLUTIONS_BITMAP);
-            int solutions_bitmap_pixel_alpha = solutions_bitmap_pixel & 0xff000000;
-            if (solutions_bitmap_pixel_alpha == 0) { continue; }
-            set_pixel_in_bitmap(x + side_padding, y + top_padding, solutions_bitmap_pixel, SCREEN);
-        }
-    }
+    render_solution(0, bitmap.width, 10 /* top padding */, STATE.solutions.data[0], STATE.input, rendering_state, bitmap);
 }
 
 LRESULT window_proc(HWND window_handle, unsigned int message, WPARAM wparam, LPARAM lparam)
@@ -207,26 +243,30 @@ LRESULT window_proc(HWND window_handle, unsigned int message, WPARAM wparam, LPA
             PAINTSTRUCT paint_operation;
             HDC device_context = BeginPaint(window_handle, &paint_operation);
 
-            render_screen();
+            RenderingState rendering_state = make_rendering_state();
+
+            render_window(&rendering_state, STATE.screen);
 
             BITMAPINFO bitmap_info;
             bitmap_info.bmiHeader.biSize = sizeof(bitmap_info.bmiHeader);
-            bitmap_info.bmiHeader.biWidth = SCREEN.width;
-            bitmap_info.bmiHeader.biHeight = -SCREEN.height;
+            bitmap_info.bmiHeader.biWidth = STATE.screen.width;
+            bitmap_info.bmiHeader.biHeight = -STATE.screen.height;
             bitmap_info.bmiHeader.biPlanes = 1;
             bitmap_info.bmiHeader.biBitCount = 32;
             bitmap_info.bmiHeader.biCompression = BI_RGB;
             StretchDIBits(
                 device_context,
                 0, 0,
-                SCREEN.width, SCREEN.height,
+                STATE.screen.width, STATE.screen.height,
                 0, 0,
-                SCREEN.width, SCREEN.height,
-                SCREEN.data,
+                STATE.screen.width, STATE.screen.height,
+                STATE.screen.data,
                 &bitmap_info,
                 DIB_RGB_COLORS,
                 SRCCOPY
             );
+
+            release_rendering_state(&rendering_state);
 
             EndPaint(window_handle, &paint_operation);
 
@@ -236,13 +276,14 @@ LRESULT window_proc(HWND window_handle, unsigned int message, WPARAM wparam, LPA
     return DefWindowProcA(window_handle, message, wparam, lparam);
 }
 
-void show_solution_bitmap_in_window(Bitmap solutions_bitmap)
+void show_solution_bitmap_in_window(Solutions solutions, Input* input)
 {
-    SCREEN.width = SCREEN_WIDTH;
-    SCREEN.height = SCREEN_HEIGHT;
-    SCREEN.data = (int*)allocate(SCREEN.width * SCREEN.height * sizeof(*SCREEN.data));
+    STATE.screen = allocate_bitmap(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    SOLUTIONS_BITMAP = solutions_bitmap;
+    set_memory(sizeof(STATE.letter_bitmaps), &STATE.letter_bitmaps, 0);
+
+    STATE.solutions = solutions;
+    STATE.input = input;
 
     WNDCLASSA window_class;
     set_memory(sizeof(window_class), &window_class, 0);
@@ -263,7 +304,7 @@ void show_solution_bitmap_in_window(Bitmap solutions_bitmap)
         // either WS_VISIBLE or a ShowWindow call afterwards is required for the window to appear
         WS_OVERLAPPEDWINDOW | WS_VISIBLE,
         /* x, y */ CW_USEDEFAULT, CW_USEDEFAULT,
-        SCREEN.width, SCREEN.height,
+        STATE.screen.width, STATE.screen.height,
         NULL,
         NULL,
         NULL,

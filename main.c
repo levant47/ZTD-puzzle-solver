@@ -73,8 +73,7 @@ int main(int argument_count, char** argument_data)
     }
     */
 
-    Bitmap solutions_bitmap = visualize_solutions_to_bitmap(solutions, parsed_input);
-    show_solution_bitmap_in_window(solutions_bitmap);
+    show_solution_bitmap_in_window(solutions, parsed_input);
 
     return 0;
 }
