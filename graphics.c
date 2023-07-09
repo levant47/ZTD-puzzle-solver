@@ -8,6 +8,7 @@ typedef unsigned int Pixel;
 typedef struct
 {
     int width, height;
+    int width_capacity, height_capacity;
     Pixel* data; // ARGB
 } Bitmap;
 
@@ -16,8 +17,15 @@ Bitmap allocate_bitmap(int width, int height)
     Bitmap result;
     result.width = width;
     result.height = height;
-    result.data = (Pixel*)allocate(result.width * result.height * sizeof(*result.data));
+    result.width_capacity = width * 2;
+    result.height_capacity = height * 2;
+    result.data = (Pixel*)allocate(result.width_capacity * result.height_capacity * sizeof(*result.data));
     return result;
+}
+
+void deallocate_bitmap(Bitmap bitmap)
+{
+    deallocate(bitmap.data);
 }
 
 Pixel ALL_SHAPE_COLORS[] =
@@ -78,9 +86,26 @@ struct
     Bitmap letter_bitmaps[128];
 } STATE;
 
-void set_pixel_in_bitmap(int x, int y, Pixel value, Bitmap bitmap) { bitmap.data[y * bitmap.width + x] = value; }
+void set_pixel_in_bitmap(int x, int y, Pixel value, Bitmap bitmap)
+{
+    if (x >= bitmap.width || y >= bitmap.height) { return; }
+    bitmap.data[y * bitmap.width_capacity + x] = value;
+}
 
-Pixel get_pixel_in_bitmap(int x, int y, Bitmap bitmap) { return bitmap.data[y * bitmap.width + x]; }
+Pixel get_pixel_in_bitmap(int x, int y, Bitmap bitmap) { return bitmap.data[y * bitmap.width_capacity + x]; }
+
+void resize_bitmap(int width, int height, Bitmap* bitmap)
+{
+    if (bitmap->width_capacity >= width && bitmap->height_capacity >= height)
+    {
+        bitmap->width = width;
+        bitmap->height = height;
+        return;
+    }
+    Bitmap original_bitmap = *bitmap;
+    *bitmap = allocate_bitmap(max(width, original_bitmap.width), max(height, original_bitmap.height));
+    deallocate_bitmap(original_bitmap);
+}
 
 void draw_horizontal_line(int x0, int x1, int y, Pixel color, Bitmap bitmap)
 {
@@ -173,7 +198,7 @@ void render_solution(int x0, int x1, int y_padding, ShapePositions positions, In
     int field_width_in_pixels = CELL_SIZE_IN_PIXELS * input->field_width;
     int field_height_in_pixels = CELL_SIZE_IN_PIXELS * input->field_height;
     int cell_size = CELL_SIZE_IN_PIXELS;
-    int x_padding = (x1 - x0 - field_width_in_pixels) / 2;
+    int x_padding = max(0, (x1 - x0 - field_width_in_pixels) / 2);
 
     for (int row = 0; row <= input->field_height; row++)
     {
@@ -230,7 +255,7 @@ void render_window(RenderingState* rendering_state, Bitmap bitmap)
 
     // TODO: support scrolling
 
-    // copy the solution bitmap to the center of the screen
+    // render the solution
     render_solution(0, bitmap.width, 10 /* top padding */, STATE.solutions.data[0], STATE.input, rendering_state, bitmap);
 }
 
@@ -240,6 +265,10 @@ LRESULT window_proc(HWND window_handle, unsigned int message, WPARAM wparam, LPA
     {
         case WM_PAINT:
         {
+            RECT client_rect;
+            GetClientRect(window_handle, &client_rect);
+            resize_bitmap(client_rect.right, client_rect.bottom, &STATE.screen);
+
             PAINTSTRUCT paint_operation;
             HDC device_context = BeginPaint(window_handle, &paint_operation);
 
@@ -249,8 +278,8 @@ LRESULT window_proc(HWND window_handle, unsigned int message, WPARAM wparam, LPA
 
             BITMAPINFO bitmap_info;
             bitmap_info.bmiHeader.biSize = sizeof(bitmap_info.bmiHeader);
-            bitmap_info.bmiHeader.biWidth = STATE.screen.width;
-            bitmap_info.bmiHeader.biHeight = -STATE.screen.height;
+            bitmap_info.bmiHeader.biWidth = STATE.screen.width_capacity;
+            bitmap_info.bmiHeader.biHeight = -STATE.screen.height_capacity;
             bitmap_info.bmiHeader.biPlanes = 1;
             bitmap_info.bmiHeader.biBitCount = 32;
             bitmap_info.bmiHeader.biCompression = BI_RGB;
@@ -289,6 +318,7 @@ void show_solution_bitmap_in_window(Solutions solutions, Input* input)
     set_memory(sizeof(window_class), &window_class, 0);
     window_class.lpfnWndProc = window_proc;
     window_class.lpszClassName = "MyWindowClass";
+    window_class.style = CS_HREDRAW | CS_VREDRAW;
 
     ATOM window_class_atom = RegisterClassA(&window_class);
     if (window_class_atom == 0)

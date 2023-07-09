@@ -63,6 +63,11 @@ void* allocate(int size)
     return VirtualAlloc(NULL, size, MEM_COMMIT, PAGE_READWRITE);
 }
 
+void deallocate(void* data)
+{
+    VirtualFree(data, 0, MEM_RELEASE);
+}
+
 int modulo(int dividend, int divisor)
 {
     int result = dividend % divisor;
