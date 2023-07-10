@@ -84,11 +84,13 @@ struct
     Solutions solutions;
     Input* input;
     Bitmap letter_bitmaps[128];
+    int scroll;
+    int max_scroll;
 } STATE;
 
 void set_pixel_in_bitmap(int x, int y, Pixel value, Bitmap bitmap)
 {
-    if (x >= bitmap.width || y >= bitmap.height) { return; }
+    if (x < 0 || y < 0 || x >= bitmap.width || y >= bitmap.height) { return; }
     bitmap.data[y * bitmap.width_capacity + x] = value;
 }
 
@@ -193,7 +195,8 @@ void draw_shape_letter(int x0, int y0, int width, int height, char letter, Pixel
     }
 }
 
-void render_solution(int x0, int x1, int y_padding, ShapePositions positions, Input* input, RenderingState* rendering_state, Bitmap bitmap)
+// returns height of the rendered element
+int render_solution(int x0, int x1, int y_padding, ShapePositions positions, Input* input, RenderingState* rendering_state, Bitmap bitmap)
 {
     int field_width_in_pixels = CELL_SIZE_IN_PIXELS * input->field_width;
     int field_height_in_pixels = CELL_SIZE_IN_PIXELS * input->field_height;
@@ -240,6 +243,8 @@ void render_solution(int x0, int x1, int y_padding, ShapePositions positions, In
             }
         }
     }
+
+    return field_height_in_pixels;
 }
 
 void render_window(RenderingState* rendering_state, Bitmap bitmap)
@@ -253,14 +258,28 @@ void render_window(RenderingState* rendering_state, Bitmap bitmap)
         }
     }
 
-    // TODO: support scrolling
+    // TODO: render scrollbar
 
     // render the solution
-    render_solution(0, bitmap.width, 10 /* top padding */, STATE.solutions.data[0], STATE.input, rendering_state, bitmap);
+    int total_y = 10; // initialized with padding from top window edge
+    int y = total_y - STATE.scroll;
+    // TODO: don't actually render solutions that are beyond the visible area
+    for (int i = 0; i < STATE.solutions.count; i++)
+    {
+        int solution_height = render_solution(0, bitmap.width, y, STATE.solutions.data[i], STATE.input, rendering_state, bitmap);
+        y += solution_height;
+        total_y += solution_height;
+        if (i != STATE.solutions.count - 1) { y += 50; total_y += 50; } // padding between solutions
+    }
+    total_y += 10;
+    total_y -= bitmap.height;
+
+    STATE.max_scroll = total_y;
 }
 
 LRESULT window_proc(HWND window_handle, unsigned int message, WPARAM wparam, LPARAM lparam)
 {
+    // TODO: fix the cursor
     switch (message)
     {
         case WM_PAINT:
@@ -301,6 +320,13 @@ LRESULT window_proc(HWND window_handle, unsigned int message, WPARAM wparam, LPA
 
             return 0;
         }
+        case WM_MOUSEWHEEL:
+        {
+            int wheel_distance = -(short)HIWORD(wparam);
+            STATE.scroll = clamp(0, STATE.scroll + wheel_distance, STATE.max_scroll);
+            InvalidateRect(window_handle, NULL, FALSE);
+            return 0;
+        }
     }
     return DefWindowProcA(window_handle, message, wparam, lparam);
 }
@@ -313,6 +339,7 @@ void show_solution_bitmap_in_window(Solutions solutions, Input* input)
 
     STATE.solutions = solutions;
     STATE.input = input;
+    STATE.scroll = 0;
 
     WNDCLASSA window_class;
     set_memory(sizeof(window_class), &window_class, 0);

@@ -75,6 +75,13 @@ int modulo(int dividend, int divisor)
     return result;
 }
 
+int clamp(int min, int value, int max)
+{
+    if (value < min) { return min; }
+    if (value > max) { return max; }
+    return value;
+}
+
 void set_memory(int size, void* data, char value)
 {
     char* byte_data = (char*)data;
