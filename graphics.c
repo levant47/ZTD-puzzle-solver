@@ -286,6 +286,10 @@ LRESULT window_proc(HWND window_handle, unsigned int message, WPARAM wparam, LPA
         {
             RECT client_rect;
             GetClientRect(window_handle, &client_rect);
+            if (client_rect.bottom > STATE.screen.height)
+            { // prevent the renderer from showing a blank area at the bottom of the screen after scrolling all the way down and maximizing the window
+                STATE.scroll = clamp(0, STATE.scroll, STATE.max_scroll - (client_rect.bottom - STATE.screen.height));
+            }
             resize_bitmap(client_rect.right, client_rect.bottom, &STATE.screen);
 
             PAINTSTRUCT paint_operation;
