@@ -12,12 +12,14 @@
 // [/] WinAPI graphics
 // [ ] clean-up
 // [ ] readme
+// [ ] release a statically linked executable
 
 #include <windows.h>
 
 #include "utils.c"
 #include "solver.c"
-#include "graphics.c"
+#include "graphics/bitmap.c"
+#include "graphics/renderer.c"
 
 typedef struct
 {
@@ -87,7 +89,7 @@ int main(int argument_count, char** argument_data)
     if (!parse_cli_parameters_result.success)
     {
         print("Error: "); print(parse_cli_parameters_result.error); print("\n");
-        print("USAGE: "); print(argument_data[0]); print(" [--text-output|--debug] <path to input file>\n");
+        print("USAGE: "); print(argument_data[0]); print(" [--text-output] [--debug] <path to input file>\n");
         return 1;
     }
     CliParameters cli_parameters = parse_cli_parameters_result.cli_parameters;
