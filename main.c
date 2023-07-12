@@ -9,7 +9,7 @@
 // [/] input file as command line parameter
 // [/] ignore different rotations of symmetrical shapes (otherwise, power room and puzzle 3 have duplicate solutions)
 // [X] raylib graphics (raylib turned out to be too hard to use because of all of the linking problems)
-// [ ] WinAPI graphics
+// [/] WinAPI graphics
 // [ ] clean-up
 // [ ] readme
 

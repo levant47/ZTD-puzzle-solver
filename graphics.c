@@ -258,12 +258,12 @@ void render_window(RenderingState* rendering_state, Bitmap bitmap)
         }
     }
 
-    // TODO: render scrollbar
+    // no scrollbar on the UI because I don't want to implement mouse clicking and dragging for the visual scrollbar and
+    // at the same time don't want to give users the impression that they can interact with it
 
     // render the solution
     int total_y = 10; // initialized with padding from top window edge
     int y = total_y - STATE.scroll;
-    // TODO: don't actually render solutions that are beyond the visible area
     for (int i = 0; i < STATE.solutions.count; i++)
     {
         int solution_height = render_solution(0, bitmap.width, y, STATE.solutions.data[i], STATE.input, rendering_state, bitmap);
@@ -279,7 +279,6 @@ void render_window(RenderingState* rendering_state, Bitmap bitmap)
 
 LRESULT window_proc(HWND window_handle, unsigned int message, WPARAM wparam, LPARAM lparam)
 {
-    // TODO: fix the cursor
     switch (message)
     {
         case WM_PAINT:
@@ -350,6 +349,7 @@ void show_solution_bitmap_in_window(Solutions solutions, Input* input)
     window_class.lpfnWndProc = window_proc;
     window_class.lpszClassName = "MyWindowClass";
     window_class.style = CS_HREDRAW | CS_VREDRAW;
+    window_class.hCursor = LoadCursor(NULL, IDC_ARROW);
 
     ATOM window_class_atom = RegisterClassA(&window_class);
     if (window_class_atom == 0)
