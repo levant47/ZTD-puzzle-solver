@@ -60,7 +60,7 @@ bool is_shape_completely_symmetrical(Shape shape)
     return true;
 }
 
-Position get_shape_x_position(ShapeRotation rotation, Shape shape)
+Position get_shape_x_position(Rotation rotation, Shape shape)
 {
     for (int x = 0; x < shape.width; x++)
     {
@@ -68,10 +68,7 @@ Position get_shape_x_position(ShapeRotation rotation, Shape shape)
         {
             if (get_shape_point(x, y, shape) == PointInSpaceX)
             {
-                Position vector;
-                vector.x = x;
-                vector.y = y;
-                return rotate_position(degrees_to_rotation(modulo(-rotation_to_degrees(rotation), 360)), vector);
+                return rotate_position(rotate_back(rotation), make_position(x, y));
             }
         }
     }
@@ -110,8 +107,7 @@ typedef struct
 void add_field_x(int x, int y, Input* input)
 {
     if (input->field_xs_count == MAX_X_COUNT) { print("max amount of field Xs exceeded"); ExitProcess(1); }
-    input->field_xs[input->field_xs_count].x = x;
-    input->field_xs[input->field_xs_count].y = y;
+    input->field_xs[input->field_xs_count] = make_position(x, y);
     input->field_xs_count++;
 }
 
@@ -415,8 +411,8 @@ char* read_input_file(char* filename)
 typedef struct
 {
     char shape_name;
-    ShapeRotation rotation;
-    int x, y;
+    Rotation rotation;
+    Position vector;
 } ShapePositionItem;
 
 typedef struct
@@ -425,7 +421,7 @@ typedef struct
     ShapePositionItem items[MAX_SHAPE_COUNT];
 } ShapePositions;
 
-void add_shape_position(char name, int x, int y, ShapeRotation rotation, ShapePositions* positions)
+void add_shape_position(char name, int x, int y, Rotation rotation, ShapePositions* positions)
 {
     if (positions->count == MAX_SHAPE_COUNT)
     {
@@ -435,8 +431,7 @@ void add_shape_position(char name, int x, int y, ShapeRotation rotation, ShapePo
         ExitProcess(1);
     }
     positions->items[positions->count].shape_name = name;
-    positions->items[positions->count].x = x;
-    positions->items[positions->count].y = y;
+    positions->items[positions->count].vector = make_position(x, y);
     positions->items[positions->count].rotation = rotation;
     positions->count++;
 }
@@ -454,12 +449,13 @@ Position position_in_rotated_shape_coordinates_to_field_coordinates(
 )
 {
     Position position_in_shape_coordinates = rotate_position(
-        degrees_to_rotation(modulo(-rotation_to_degrees(shape_position_in_field_coordinates.rotation), 360)),
+        rotate_back(shape_position_in_field_coordinates.rotation),
         position_in_rotated_shape_coordinates
     );
-    Position position_in_field_coordinates;
-    position_in_field_coordinates.x = position_in_shape_coordinates.x + shape_position_in_field_coordinates.x;
-    position_in_field_coordinates.y = position_in_shape_coordinates.y + shape_position_in_field_coordinates.y;
+    Position position_in_field_coordinates = add_positions(
+        position_in_shape_coordinates,
+        shape_position_in_field_coordinates.vector
+    );
     return position_in_field_coordinates;
 }
 
@@ -468,9 +464,10 @@ Position position_in_field_coordinates_to_position_in_rotated_shape_coordinates(
     ShapePositionItem shape_position_in_field_coordinates
 )
 {
-    Position position_in_rotated_shape_coordinates;
-    position_in_rotated_shape_coordinates.x = position_in_field_coordinates.x - shape_position_in_field_coordinates.x;
-    position_in_rotated_shape_coordinates.y = position_in_field_coordinates.y - shape_position_in_field_coordinates.y;
+    Position position_in_rotated_shape_coordinates = subtract_positions(
+        position_in_field_coordinates,
+        shape_position_in_field_coordinates.vector
+    );
     return rotate_position(shape_position_in_field_coordinates.rotation, position_in_rotated_shape_coordinates);
 }
 
@@ -485,9 +482,7 @@ bool shapes_intersect(
     {
         for (int y = 0; y < shape_1.height; y++)
         {
-            Position position_in_rotated_shape_1_coordinates;
-            position_in_rotated_shape_1_coordinates.x = x;
-            position_in_rotated_shape_1_coordinates.y = y;
+            Position position_in_rotated_shape_1_coordinates = make_position(x, y);
             Position position_in_rotated_shape_2_coordinates = position_in_field_coordinates_to_position_in_rotated_shape_coordinates(
                 position_in_rotated_shape_coordinates_to_field_coordinates(
                     position_in_rotated_shape_1_coordinates,
@@ -513,10 +508,10 @@ bool is_contradictory(ShapePositions positions, Input input)
         // shape does not go outside the field
         {
             // top left corner
-            int actual_x = position.x;
+            int actual_x = position.vector.x;
             if (position.rotation == ShapeRotation90) { actual_x -= shape.height - 1; }
             else if (position.rotation == ShapeRotation180) { actual_x -= shape.width - 1; }
-            int actual_y = position.y;
+            int actual_y = position.vector.y;
             if (position.rotation == ShapeRotation180) { actual_y -= shape.height - 1; }
             else if (position.rotation == ShapeRotation270) { actual_y -= shape.width - 1; }
             // bottom right corner
@@ -536,9 +531,7 @@ bool is_contradictory(ShapePositions positions, Input input)
             for (int y = 0; y < shape.height; y++)
             {
                 if (get_shape_point(x, y, shape) == PointInSpaceEmpty) { continue; }
-                Position position_in_rotated_shape_coordinates;
-                position_in_rotated_shape_coordinates.x = x;
-                position_in_rotated_shape_coordinates.y = y;
+                Position position_in_rotated_shape_coordinates = make_position(x, y);
                 Position position_in_field_coordinates = position_in_rotated_shape_coordinates_to_field_coordinates(
                     position_in_rotated_shape_coordinates,
                     position
@@ -606,7 +599,7 @@ void find_solutions_loop(ShapePositions* positions, Input* input, Solutions* sol
         int possible_placements = 0;
         for (int k = 0; k < countof(ALL_ROTATIONS); k++)
         {
-            ShapeRotation rotation = ALL_ROTATIONS[k];
+            Rotation rotation = ALL_ROTATIONS[k];
             Position shape_x_position = get_shape_x_position(rotation, shape);
             for (int j = 0; j < input->field_xs_count; j++)
             {
@@ -636,7 +629,7 @@ void find_solutions_loop(ShapePositions* positions, Input* input, Solutions* sol
         Shape shape = input->shapes[target_shape_index];
         for (int k = 0; k < countof(ALL_ROTATIONS); k++)
         {
-            ShapeRotation rotation = ALL_ROTATIONS[k];
+            Rotation rotation = ALL_ROTATIONS[k];
             if ((rotation == ShapeRotation180 || rotation == ShapeRotation270) && shape.is_vertically_symmetrical)
             { continue; }
             if (rotation == ShapeRotation90 && shape.is_completely_symmetrical)
@@ -695,13 +688,12 @@ char* visualize_solution_to_text(ShapePositions positions, Input* input)
             {
                 PointInSpace point = get_shape_point(x, y, shape);
                 if (point == PointInSpaceEmpty) { continue; }
-                Position local_position;
-                local_position.x = x;
-                local_position.y = y;
-                Position field_position = rotate_position(degrees_to_rotation(modulo(-rotation_to_degrees(position.rotation), 360)), local_position);
-                field_position.x += position.x;
-                field_position.y += position.y;
-                field[field_position.y * (input->field_width + 1) + field_position.x] = point == PointInSpaceX ? 'X' : shape.name;
+                Position local_position = make_position(x, y);
+                Position field_position = rotate_position(rotate_back(position.rotation), local_position);
+                field_position = add_positions(field_position, position.vector);
+                field[field_position.y * (input->field_width + 1) + field_position.x] = point == PointInSpaceX
+                    ? 'X'
+                    : shape.name;
             }
         }
     }

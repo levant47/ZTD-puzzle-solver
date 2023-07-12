@@ -220,12 +220,9 @@ int render_solution(
             {
                 PointInSpace point = get_shape_point(x, y, shape);
                 if (point == PointInSpaceEmpty) { continue; }
-                Position local_position;
-                local_position.x = x;
-                local_position.y = y;
-                Position field_position = rotate_position(degrees_to_rotation(modulo(-rotation_to_degrees(position.rotation), 360)), local_position);
-                field_position.x += position.x;
-                field_position.y += position.y;
+                Position local_position = make_position(x, y);
+                Position field_position = rotate_position(rotate_back(position.rotation), local_position);
+                field_position = add_positions(field_position, position.vector);
                 draw_shape_letter(
                     x_padding + field_position.x * CELL_SIZE_IN_PIXELS,
                     y_padding + field_position.y * CELL_SIZE_IN_PIXELS,
