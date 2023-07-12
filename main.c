@@ -17,7 +17,8 @@
 #include <windows.h>
 
 #include "utils.c"
-#include "solver.c"
+#include "solver/geometry.c"
+#include "solver/solver.c"
 #include "graphics/bitmap.c"
 #include "graphics/renderer.c"
 

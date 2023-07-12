@@ -1,7 +1,8 @@
 #include <windows.h>
 
 #include "utils.c"
-#include "solver.c"
+#include "solver/geometry.c"
+#include "solver/solver.c"
 
 void test(char* filename, int solution_count, char* some_solution)
 {
