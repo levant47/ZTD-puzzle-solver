@@ -8,6 +8,9 @@ Position make_position(int x, int y)
     return result;
 }
 
+bool positions_equal(Position left, Position right)
+{ return left.x == right.x && left.y == right.y; }
+
 Position add_positions(Position left, Position right)
 { return make_position(left.x + right.x, left.y + right.y); }
 

@@ -212,6 +212,7 @@ int render_solution(
 
     for (int i = 0; i < positions.count; i++)
     {
+        // TODO: better name for ShapePositionItem and ShapePosition
         ShapePositionItem position = positions.items[i];
         Shape shape = get_shape_by_name(position.shape_name, *input);
         for (int x = 0; x < shape.width; x++)
@@ -221,8 +222,10 @@ int render_solution(
                 PointInSpace point = get_shape_point(x, y, shape);
                 if (point == PointInSpaceEmpty) { continue; }
                 Position local_position = make_position(x, y);
-                Position field_position = rotate_position(rotate_back(position.rotation), local_position);
-                field_position = add_positions(field_position, position.vector);
+                Position field_position = position_in_rotated_shape_coordinates_to_field_coordinates(
+                    local_position,
+                    position
+                );
                 draw_shape_letter(
                     x_padding + field_position.x * CELL_SIZE_IN_PIXELS,
                     y_padding + field_position.y * CELL_SIZE_IN_PIXELS,

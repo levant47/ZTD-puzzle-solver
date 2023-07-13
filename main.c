@@ -19,6 +19,7 @@
 #include "utils.c"
 #include "solver/geometry.c"
 #include "solver/solver.c"
+#include "solver/parser.c"
 #include "graphics/bitmap.c"
 #include "graphics/renderer.c"
 

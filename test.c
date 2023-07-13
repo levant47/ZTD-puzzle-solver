@@ -3,6 +3,7 @@
 #include "utils.c"
 #include "solver/geometry.c"
 #include "solver/solver.c"
+#include "solver/parser.c"
 
 void test(char* filename, int solution_count, char* some_solution)
 {
