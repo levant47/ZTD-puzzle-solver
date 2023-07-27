@@ -71,9 +71,9 @@ bool expect_newline(Parser* parser)
 
 bool expect_eof(Parser parser) { return parser.source[parser.index] == '\0'; }
 
-Input* parse_input(char* source)
+GameBoard* parse_input(char* source)
 {
-    Input* result = allocate(sizeof(Input));
+    GameBoard* result = allocate(sizeof(GameBoard));
 
     Parser parser = make_parser(source);
     while (!expect_eof(parser))
@@ -104,7 +104,7 @@ Input* parse_input(char* source)
                 if (current(parser) == '.') { }
                 else if (current(parser) == 'X')
                 {
-                    add_field_x(x, y, result);
+                    add_field_x_to_board(x, y, result);
                 }
                 else
                 {
@@ -221,7 +221,7 @@ Input* parse_input(char* source)
 
             shape.is_completely_symmetrical = is_shape_completely_symmetrical(shape);
             shape.is_vertically_symmetrical = is_shape_vertically_symmetrical(shape);
-            add_shape_to_input(shape, result);
+            add_shape_to_board(shape, result);
         }
     }
 

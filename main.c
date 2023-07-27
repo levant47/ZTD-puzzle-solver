@@ -18,6 +18,7 @@
 
 #include "utils.c"
 #include "solver/geometry.c"
+#include "solver/models.c"
 #include "solver/solver.c"
 #include "solver/parser.c"
 #include "graphics/bitmap.c"
@@ -98,7 +99,7 @@ int main(int argument_count, char** argument_data)
 
     char* input_file_text = read_input_file(cli_parameters.path_to_input_file);
 
-    Input* parsed_input = parse_input(input_file_text);
+    GameBoard* parsed_input = parse_input(input_file_text);
 
     if (cli_parameters.debug_mode)
     {

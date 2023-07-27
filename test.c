@@ -2,13 +2,14 @@
 
 #include "utils.c"
 #include "solver/geometry.c"
+#include "solver/models.c"
 #include "solver/solver.c"
 #include "solver/parser.c"
 
 void test(char* filename, int solution_count, char* some_solution)
 {
     char* input_file_text = read_input_file(filename);
-    Input* parsed_input = parse_input(input_file_text);
+    GameBoard* parsed_input = parse_input(input_file_text);
     Solutions solutions = find_solutions(parsed_input);
 
     bool failed = solutions.count != solution_count;

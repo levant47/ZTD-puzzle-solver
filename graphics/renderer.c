@@ -57,7 +57,7 @@ struct
 {
     Bitmap screen;
     Solutions solutions;
-    Input* input;
+    GameBoard* game_board;
     Bitmap letter_bitmaps[128];
     int scroll;
     int max_scroll;
@@ -176,8 +176,8 @@ int render_solution(
     int x0,
     int x1,
     int y_padding,
-    ShapePositions positions,
-    Input* input,
+    BoardPlacements positions,
+    GameBoard* input,
     RenderingState* rendering_state,
     Bitmap bitmap
 )
@@ -212,8 +212,7 @@ int render_solution(
 
     for (int i = 0; i < positions.count; i++)
     {
-        // TODO: better name for ShapePositionItem and ShapePosition
-        ShapePositionItem position = positions.items[i];
+        ShapeBoardPlacement position = positions.items[i];
         Shape shape = get_shape_by_name(position.shape_name, *input);
         for (int x = 0; x < shape.width; x++)
         {
@@ -266,7 +265,7 @@ void render_window(RenderingState* rendering_state, Bitmap bitmap)
             bitmap.width,
             total_y - STATE.scroll,
             STATE.solutions.data[i],
-            STATE.input,
+            STATE.game_board,
             rendering_state,
             bitmap
         );
@@ -338,14 +337,14 @@ LRESULT window_proc(HWND window_handle, unsigned int message, WPARAM wparam, LPA
     return DefWindowProcA(window_handle, message, wparam, lparam);
 }
 
-void show_solution_bitmap_in_window(Solutions solutions, Input* input)
+void show_solution_bitmap_in_window(Solutions solutions, GameBoard* input)
 {
     STATE.screen = allocate_bitmap(SCREEN_WIDTH, SCREEN_HEIGHT);
 
     set_memory(sizeof(STATE.letter_bitmaps), &STATE.letter_bitmaps, 0);
 
     STATE.solutions = solutions;
-    STATE.input = input;
+    STATE.game_board = input;
     STATE.scroll = 0;
 
     WNDCLASSA window_class;
