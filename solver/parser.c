@@ -1,3 +1,5 @@
+// this file contains everything responsible for parsing a text file into a game board
+
 typedef struct
 {
     char* source;
@@ -29,7 +31,7 @@ void next_plus(int count, Parser* parser)
             if (i == count)
             {
                 print("Stepped over newline\n");
-                ExitProcess(1);
+                panic();
             }
         }
     }
@@ -85,7 +87,7 @@ GameBoard* parse_input(char* source)
                 print("Expected just 'field' on line ");
                 print_number(parser.line);
                 print(", but got something else\n");
-                ExitProcess(1);
+                panic();
             }
 
             int field_width = 0;
@@ -98,7 +100,7 @@ GameBoard* parse_input(char* source)
                     print("Line ");
                     print_number(parser.line);
                     print(" is larger than the rest of the field\n");
-                    ExitProcess(1);
+                    panic();
                 }
 
                 if (current(parser) == '.') { }
@@ -111,7 +113,7 @@ GameBoard* parse_input(char* source)
                     print("Unrecognized character in field on line ");
                     print_number(parser.line);
                     print("\n");
-                    ExitProcess(1);
+                    panic();
                 }
                 x++;
                 next(&parser);
@@ -143,7 +145,7 @@ GameBoard* parse_input(char* source)
                 print("Expected newline after one-character shape name on line ");
                 print_number(parser.line);
                 print("\n");
-                ExitProcess(1);
+                panic();
             }
             if (shape_name == 'X' || shape_name == ' ' || shape_name == '\t' || shape_name == '.')
             {
@@ -152,7 +154,7 @@ GameBoard* parse_input(char* source)
                 print("' is invalid (line ");
                 print_number(parser.line);
                 print(")\n");
-                ExitProcess(1);
+                panic();
             }
             for (int i = 0; i < result->shapes_count; i++)
             {
@@ -163,7 +165,7 @@ GameBoard* parse_input(char* source)
                     print("' on line ");
                     print_number(parser.line);
                     print("\n");
-                    ExitProcess(1);
+                    panic();
                 }
             }
 
@@ -178,7 +180,7 @@ GameBoard* parse_input(char* source)
                 if (current(parser) == ' ') { }
                 else if (current(parser) == '.')
                 {
-                    add_point_to_shape(x, y, PointInSpaceShapeBody, &shape);
+                    set_shape_piece(x, y, ShapePieceCorpus, &shape);
                 }
                 else if (current(parser) == 'X')
                 {
@@ -187,9 +189,9 @@ GameBoard* parse_input(char* source)
                         print("Found a duplicate X mark on shape ");
                         print_char(shape_name);
                         print("\n");
-                        ExitProcess(1);
+                        panic();
                     }
-                    add_point_to_shape(x, y, PointInSpaceX, &shape);
+                    set_shape_piece(x, y, ShapePieceX, &shape);
                     x_found = true;
                 }
                 else
@@ -198,7 +200,7 @@ GameBoard* parse_input(char* source)
                     print_number(parser.line);
                     print(" while parsing shape ");
                     print_char(shape.name);
-                    ExitProcess(1);
+                    panic();
                 }
                 x++;
                 next(&parser);
@@ -216,7 +218,7 @@ GameBoard* parse_input(char* source)
                 print("Did not find X on shape ");
                 print_char(shape_name);
                 print("\n");
-                ExitProcess(1);
+                panic();
             }
 
             shape.is_completely_symmetrical = is_shape_completely_symmetrical(shape);
@@ -230,7 +232,7 @@ GameBoard* parse_input(char* source)
         print("Expected an equal amount of shapes an Xs on the field, instead got ");
         print_number(result->field_xs_count); print(" Xs and ");
         print_number(result->shapes_count); print(" shapes\n");
-        ExitProcess(1);
+        panic();
     }
 
     return result;
@@ -250,7 +252,7 @@ char* read_input_file(char* filename)
     if (input_file == INVALID_HANDLE_VALUE)
     {
         print("Failed to open \""); print(filename); print("\"\n");
-        ExitProcess(1);
+        panic();
     }
 
     char* buffer = allocate(MAX_INPUT_SIZE + 1);
@@ -262,7 +264,7 @@ char* read_input_file(char* filename)
         print("Input file can not be larger than ");
         print_number(MAX_INPUT_SIZE);
         print(" bytes\n");
-        ExitProcess(1);
+        panic();
     }
     buffer[bytes_read] = '\0';
 

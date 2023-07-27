@@ -14,6 +14,9 @@
 // [ ] readme
 // [ ] release a statically linked executable
 
+// this file contains all include directives, parsing and handling of command line parameters, and the main entrypoint
+// to the program (the other being test.c)
+
 #include <windows.h>
 
 #include "utils.c"
@@ -86,8 +89,6 @@ ParseCliParametersResult parse_cli_parameters(int argument_count, char** argumen
 
 int main(int argument_count, char** argument_data)
 {
-    init_stdout();
-
     ParseCliParametersResult parse_cli_parameters_result = parse_cli_parameters(argument_count, argument_data);
     if (!parse_cli_parameters_result.success)
     {
@@ -98,32 +99,31 @@ int main(int argument_count, char** argument_data)
     CliParameters cli_parameters = parse_cli_parameters_result.cli_parameters;
 
     char* input_file_text = read_input_file(cli_parameters.path_to_input_file);
-
-    GameBoard* parsed_input = parse_input(input_file_text);
+    GameBoard* game_board = parse_input(input_file_text);
 
     if (cli_parameters.debug_mode)
     {
         print("Parsed field of size ");
-        print_number(parsed_input->field_width);
+        print_number(game_board->field_width);
         print("x");
-        print_number(parsed_input->field_height);
+        print_number(game_board->field_height);
         print(" and ");
-        print_number(parsed_input->shapes_count);
+        print_number(game_board->shapes_count);
         print(" shapes\n");
-        for (int i = 0; i < parsed_input->shapes_count; i++)
+        for (int i = 0; i < game_board->shapes_count; i++)
         {
             print("Shape ");
-            print_char(parsed_input->shapes[i].name);
+            print_char(game_board->shapes[i].name);
             print(" of size ");
-            print_number(parsed_input->shapes[i].width);
+            print_number(game_board->shapes[i].width);
             print("x");
-            print_number(parsed_input->shapes[i].height);
+            print_number(game_board->shapes[i].height);
             print("\n");
         }
         print("\n");
     }
 
-    Solutions solutions = find_solutions(parsed_input);
+    Solutions solutions = find_solutions(game_board);
 
     if (cli_parameters.output_to_terminal)
     {
@@ -134,13 +134,13 @@ int main(int argument_count, char** argument_data)
         for (int j = 0; j < solutions.count; j++)
         {
             print("Solution "); print_number(j + 1); print(":\n");
-            print(visualize_solution_to_text(solutions.data[j], parsed_input));
+            print(visualize_solution_to_text(solutions.data[j], game_board));
             print("\n");
         }
     }
     else
     {
-        show_solution_bitmap_in_window(solutions, parsed_input);
+        show_solution_bitmap_in_window(solutions, game_board);
     }
 
     return 0;

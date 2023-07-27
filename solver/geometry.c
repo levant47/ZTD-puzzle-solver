@@ -41,6 +41,6 @@ Position rotate_position(Rotation rotation, Position position)
         print("Received an unexpected rotation value of ");
         print_number((int)rotation);
         print("\n");
-        ExitProcess(1);
+        panic();
     }
 }

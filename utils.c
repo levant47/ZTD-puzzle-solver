@@ -6,6 +6,8 @@ typedef int bool;
 
 const int MAX_S32 = 2147483647;
 
+void panic() { ExitProcess(1); }
+
 int get_c_string_length(char* string)
 {
     int result = 0;
@@ -13,15 +15,18 @@ int get_c_string_length(char* string)
     return result;
 }
 
+bool stdout_initialized = false;
 HANDLE STDOUT;
 
 void init_stdout()
 {
     STDOUT = GetStdHandle(STD_OUTPUT_HANDLE);
+    stdout_initialized = true;
 }
 
 void print(char* message)
 {
+    if (!stdout_initialized) { init_stdout(); }
     DWORD _bytes_written;
     WriteFile(STDOUT, message, get_c_string_length(message), &_bytes_written, NULL);
 }

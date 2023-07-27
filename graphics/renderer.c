@@ -218,8 +218,8 @@ int render_solution(
         {
             for (int y = 0; y < shape.height; y++)
             {
-                PointInSpace point = get_shape_point(x, y, shape);
-                if (point == PointInSpaceEmpty) { continue; }
+                ShapePiece point = get_shape_piece(x, y, shape);
+                if (point == ShapePieceNone) { continue; }
                 Position local_position = make_position(x, y);
                 Position field_position = position_in_rotated_shape_coordinates_to_field_coordinates(
                     local_position,
@@ -230,7 +230,7 @@ int render_solution(
                     y_padding + field_position.y * CELL_SIZE_IN_PIXELS,
                     CELL_SIZE_IN_PIXELS,
                     CELL_SIZE_IN_PIXELS,
-                    point == PointInSpaceX ? 'X' : shape.name,
+                    point == ShapePieceX ? 'X' : shape.name,
                     SHAPE_COLORS[i % countof(SHAPE_COLORS)],
                     rendering_state,
                     bitmap

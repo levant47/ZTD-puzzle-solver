@@ -6,19 +6,19 @@
 #include "solver/solver.c"
 #include "solver/parser.c"
 
-void test(char* filename, int solution_count, char* some_solution)
+void test(char* filename, int expected_solution_count, char* expected_one_of_solutions)
 {
     char* input_file_text = read_input_file(filename);
-    GameBoard* parsed_input = parse_input(input_file_text);
-    Solutions solutions = find_solutions(parsed_input);
+    GameBoard* board = parse_input(input_file_text);
+    Solutions solutions = find_solutions(board);
 
-    bool failed = solutions.count != solution_count;
+    bool failed = solutions.count != expected_solution_count;
     if (!failed)
     {
         bool matching_solution_found = false;
         for (int i = 0; i < solutions.count; i++)
         {
-            if (are_strings_equal(some_solution, visualize_solution_to_text(solutions.data[i], parsed_input)))
+            if (are_strings_equal(expected_one_of_solutions, visualize_solution_to_text(solutions.data[i], board)))
             {
                 matching_solution_found = true;
                 break;
@@ -26,32 +26,27 @@ void test(char* filename, int solution_count, char* some_solution)
         }
         failed = !matching_solution_found;
     }
-    if (failed)
-    {
-        print(filename); print(": failed\n");
-    }
+    if (failed) { print(filename); print(": failed\n"); }
 }
 
 int main()
 {
-    init_stdout();
-
     test("test files\\puzzle1.txt", 1,
         "AXA\n"
         ".A.\n"
         "XBB\n"
     );
     test("test files\\puzzle2.txt", 10,
-        "....AAAAAX\n"
-        "BXBBB.D..C\n"
-        "..F..DX..X\n"
-        ".FXF..D..C\n"
-        ".....III..\n"
-        ".....IXI..\n"
-        ".....GXG..\n"
-        ".EEXE.G...\n"
+        ".C.......X\n"
+        ".X...III.D\n"
+        ".C...IXIDX\n"
+        ".BXBBB...D\n"
+        "..........\n"
+        ".AAAAAX...\n"
+        "...F.GXG..\n"
+        "..FXF.G...\n"
         "HH........\n"
-        "XH.....X..\n"
+        "XH...EEXE.\n"
     );
     test("test files\\puzzle3.txt", 10,
         ".........X\n"
