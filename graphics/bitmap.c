@@ -1,15 +1,15 @@
 typedef unsigned int Pixel;
 
-const Pixel COLOR_BLACK = 0xff000000;
-const Pixel COLOR_BLUE = 0xff0000ff;
-const Pixel COLOR_GREEN = 0xff00ff00;
-const Pixel COLOR_RED = 0xffff0000;
-const Pixel COLOR_CYAN = 0xff00ffff;
-const Pixel COLOR_MAGENTA = 0xffff00ff;
-const Pixel COLOR_YELLOW = 0xffffff00;
-const Pixel COLOR_GRAY = 0xff808080;
-const Pixel COLOR_ORANGE = 0xffff8000;
-const Pixel COLOR_AZURE = 0xff0080ff;
+#define COLOR_BLACK 0xff000000
+#define COLOR_BLUE 0xff0000ff
+#define COLOR_GREEN 0xff00ff00
+#define COLOR_RED 0xffff0000
+#define COLOR_CYAN 0xff00ffff
+#define COLOR_MAGENTA 0xffff00ff
+#define COLOR_YELLOW 0xffffff00
+#define COLOR_GRAY 0xff808080
+#define COLOR_ORANGE 0xffff8000
+#define COLOR_AZURE 0xff0080ff
 
 typedef struct
 {
