@@ -1,3 +1,5 @@
+// this file contains functions that open a window to display all the found solutions using native Windows API
+
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 800
 #define CELL_SIZE_IN_PIXELS 50
@@ -5,17 +7,18 @@
 
 Pixel SHAPE_COLORS[] =
 {
-    0xff0000ff,
-    0xff00ff00,
-    0xffff0000,
-    0xff00ffff,
-    0xffff00ff,
-    0xffffff00,
-    0xff808080,
-    0xffff8000,
-    0xff0080ff,
+    COLOR_BLUE,
+    COLOR_GREEN,
+    COLOR_RED,
+    COLOR_CYAN,
+    COLOR_MAGENTA,
+    COLOR_YELLOW,
+    COLOR_GRAY,
+    COLOR_ORANGE,
+    COLOR_AZURE,
 };
 
+// RenderingState only lives for one render
 typedef struct
 {
     HDC temporary_device_context;
@@ -53,6 +56,7 @@ HDC get_temporary_device_context_from_rendering_state(RenderingState* rendering_
     return rendering_state->temporary_device_context;
 }
 
+// global state that is accessed by the message handling procedure
 struct
 {
     Bitmap screen;
@@ -177,19 +181,20 @@ int render_solution(
     int x1,
     int y_padding,
     BoardPlacements positions,
-    GameBoard* input,
+    GameBoard* board,
     RenderingState* rendering_state,
     Bitmap bitmap
 )
 {
-    int field_width_in_pixels = CELL_SIZE_IN_PIXELS * input->field_width;
-    int field_height_in_pixels = CELL_SIZE_IN_PIXELS * input->field_height;
+    int field_width_in_pixels = CELL_SIZE_IN_PIXELS * board->field_width;
+    int field_height_in_pixels = CELL_SIZE_IN_PIXELS * board->field_height;
     int cell_size = CELL_SIZE_IN_PIXELS;
     int x_padding = max(0, (x1 - x0 - field_width_in_pixels) / 2);
 
-    for (int row = 0; row <= input->field_height; row++)
+    // draw the grid
+    for (int row = 0; row <= board->field_height; row++)
     {
-        int adjustment_for_last_row = row == input->field_height ? -1 : 0;
+        int adjustment_for_last_row = row == board->field_height ? -1 : 0;
         draw_horizontal_line(
             x_padding,
             x_padding + field_width_in_pixels,
@@ -198,9 +203,9 @@ int render_solution(
             bitmap
         );
     }
-    for (int column = 0; column <= input->field_width; column++)
+    for (int column = 0; column <= board->field_width; column++)
     {
-        int adjustment_for_last_column = column == input->field_width ? -1 : 0;
+        int adjustment_for_last_column = column == board->field_width ? -1 : 0;
         draw_vertical_line(
             x_padding + column * cell_size + adjustment_for_last_column,
             y_padding,
@@ -210,10 +215,11 @@ int render_solution(
         );
     }
 
+    // draw the letters
     for (int i = 0; i < positions.count; i++)
     {
         ShapeBoardPlacement position = positions.items[i];
-        Shape shape = get_shape_by_name(position.shape_name, *input);
+        Shape shape = get_shape_by_name(position.shape_name, *board);
         for (int x = 0; x < shape.width; x++)
         {
             for (int y = 0; y < shape.height; y++)
@@ -260,6 +266,8 @@ void render_window(RenderingState* rendering_state, Bitmap bitmap)
     int total_y = 10; // initialized with padding from top window edge
     for (int i = 0; i < STATE.solutions.count; i++)
     {
+        // this is inefficient because we're still going through the rendering function for each solution that isn't
+        // visible, but it's simpler that way
         int solution_height = render_solution(
             0,
             bitmap.width,
@@ -337,14 +345,14 @@ LRESULT window_proc(HWND window_handle, unsigned int message, WPARAM wparam, LPA
     return DefWindowProcA(window_handle, message, wparam, lparam);
 }
 
-void show_solution_bitmap_in_window(Solutions solutions, GameBoard* input)
+void show_solutions_in_window(Solutions solutions, GameBoard* board)
 {
     STATE.screen = allocate_bitmap(SCREEN_WIDTH, SCREEN_HEIGHT);
 
     set_memory(sizeof(STATE.letter_bitmaps), &STATE.letter_bitmaps, 0);
 
     STATE.solutions = solutions;
-    STATE.game_board = input;
+    STATE.game_board = board;
     STATE.scroll = 0;
 
     WNDCLASSA window_class;

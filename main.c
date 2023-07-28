@@ -1,3 +1,6 @@
+// this file contains all include directives, parsing and handling of command line parameters, and the main entrypoint
+// to the program (the other being test.c)
+
 // TODO:
 // [/] rotations
 // [/] better visualization for solutions
@@ -10,12 +13,9 @@
 // [/] ignore different rotations of symmetrical shapes (otherwise, power room and puzzle 3 have duplicate solutions)
 // [X] raylib graphics (raylib turned out to be too hard to use because of all of the linking problems)
 // [/] WinAPI graphics
-// [ ] clean-up
+// [/] clean-up
 // [ ] readme
 // [ ] release a statically linked executable
-
-// this file contains all include directives, parsing and handling of command line parameters, and the main entrypoint
-// to the program (the other being test.c)
 
 #include <windows.h>
 
@@ -140,7 +140,7 @@ int main(int argument_count, char** argument_data)
     }
     else
     {
-        show_solution_bitmap_in_window(solutions, game_board);
+        show_solutions_in_window(solutions, game_board);
     }
 
     return 0;

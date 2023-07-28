@@ -107,24 +107,24 @@ void add_field_x_to_board(int x, int y, GameBoard* board)
     board->field_xs_count++;
 }
 
-void add_shape_to_board(Shape shape, GameBoard* input)
+void add_shape_to_board(Shape shape, GameBoard* board)
 {
-    if (input->shapes_count == MAX_SHAPE_COUNT)
+    if (board->shapes_count == MAX_SHAPE_COUNT)
     {
         print("Exceeded max amount of shapes: ");
         print_number(MAX_SHAPE_COUNT);
         print("\n");
         panic();
     }
-    input->shapes[input->shapes_count] = shape;
-    input->shapes_count++;
+    board->shapes[board->shapes_count] = shape;
+    board->shapes_count++;
 }
 
-Shape get_shape_by_name(char name, GameBoard input)
+Shape get_shape_by_name(char name, GameBoard board)
 {
-    for (int i = 0; i < input.shapes_count; i++)
+    for (int i = 0; i < board.shapes_count; i++)
     {
-        Shape shape = input.shapes[i];
+        Shape shape = board.shapes[i];
         if (shape.name == name) { return shape; }
     }
     print("Shape with name "); print_char(name); print(" not found\n");

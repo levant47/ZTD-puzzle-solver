@@ -34,7 +34,6 @@ bool are_board_placements_invalid(BoardPlacements placements, GameBoard board)
         Shape shape = get_shape_by_name(placement.shape_name, board);
 
         // shape does not go outside the field
-        // TODO: maybe this could be simpler
         {
             // // top left corner
             int rotated_x = placement.vector.x;
@@ -177,14 +176,14 @@ void find_solutions_loop(BoardPlacements* placements, GameBoard* board, Solution
     }
 }
 
-Solutions find_solutions(GameBoard* input)
+Solutions find_solutions(GameBoard* board)
 {
     Solutions solutions;
     solutions.count = 0;
     solutions.exceeded = false;
     BoardPlacements placements;
     placements.count = 0;
-    find_solutions_loop(&placements, input, &solutions);
+    find_solutions_loop(&placements, board, &solutions);
     return solutions;
 }
 
