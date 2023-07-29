@@ -15,7 +15,7 @@
 // [/] WinAPI graphics
 // [/] clean-up
 // [/] readme
-// [ ] release a statically linked executable
+// [/] release a statically linked executable
 
 #include <windows.h>
 
