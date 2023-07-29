@@ -20,15 +20,15 @@ USAGE: ztdsolver [--text-output] [--debug] <path to input file>
 
 For example, given the following input file:
 
-![screenshot of "power room.txt"](./readme screenshots/input.png)
+![screenshot of "power room.txt"](./readme%20screenshots/input.png)
 
 The program will produce a solution like this (in the app you can scroll using the mouse wheel to see the other solutions):
 
-![screenshot of the app displaying a solution to the power room puzzle](./readme screenshots/solution.png)
+![screenshot of the app displaying a solution to the power room puzzle](./readme%20screenshots/solution.png)
 
 And here's what the solved puzzle looks like in the game:
 
-![screenshot of the solved power room puzzle in the game](./readme screenshots/game.png)
+![screenshot of the solved power room puzzle in the game](./readme%20screenshots/game.png)
 
 ## Compiling and running tests
 

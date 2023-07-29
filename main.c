@@ -14,7 +14,7 @@
 // [X] raylib graphics (raylib turned out to be too hard to use because of all of the linking problems)
 // [/] WinAPI graphics
 // [/] clean-up
-// [ ] readme
+// [/] readme
 // [ ] release a statically linked executable
 
 #include <windows.h>
