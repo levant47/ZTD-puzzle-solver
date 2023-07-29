@@ -19,17 +19,20 @@ USAGE: ztdsolver [--text-output] [--debug] <path to input file>
 --debug causes the program to print information about the parsed input to the console.
 
 For example, given the following input file:
-TODO
 
-The program will produce a solution like this:
-TODO
+![screenshot of "power room.txt"](./readme screenshots/input.png)
+
+The program will produce a solution like this (in the app you can scroll using the mouse wheel to see the other solutions):
+
+![screenshot of the app displaying a solution to the power room puzzle](./readme screenshots/solution.png)
 
 And here's what the solved puzzle looks like in the game:
-TODO
+
+![screenshot of the solved power room puzzle in the game](./readme screenshots/game.png)
 
 ## Compiling and running tests
 
-You can run the program using [tcc](https://bellard.org/tcc/) like this:
+You can compile and run the program using [tcc](https://bellard.org/tcc/) like this:
 
 ```
 tcc -luser32 -lgdi32 -run main.c "test files\biolab.txt"
@@ -41,4 +44,4 @@ And run tests like this:
 tcc -run test.c
 ```
 
-Also, I included a CMakeLists.txt file that has two targets: main and test.
+Also, I included a CMakeLists.txt file with two targets: main and test.

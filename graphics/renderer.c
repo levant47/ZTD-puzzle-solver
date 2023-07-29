@@ -372,7 +372,7 @@ void show_solutions_in_window(Solutions solutions, GameBoard* board)
     HWND window_handle = CreateWindowExA(
         /* dwExStyle: */ 0,
         window_class.lpszClassName,
-        "My Window",
+        "ZTD puzzle solver",
         // either WS_VISIBLE or a ShowWindow call afterwards is required for the window to appear
         WS_OVERLAPPEDWINDOW | WS_VISIBLE,
         /* x, y */ CW_USEDEFAULT, CW_USEDEFAULT,
